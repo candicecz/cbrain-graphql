@@ -1,8 +1,25 @@
-const fetch = require("./cbrain-api");
+const { gql } = require("apollo-server");
+const fetch = require("../cbrain-api");
+
+const typeDefs = gql`
+  extend type Query {
+    session: Session
+  }
+  extend type Mutation {
+    login(login: String!, password: String!): Session
+    logout: Response
+  }
+
+  type Session {
+    userId: ID
+    token: String
+    message: String
+  }
+`;
 
 const resolvers = {
   Query: {
-    getSession: (_, __, context) => {
+    session: (_, __, context) => {
       return fetch(context, "session")
         .then(data => data.json())
         .then(session => {
@@ -22,8 +39,8 @@ const resolvers = {
   Mutation: {
     login: (_, { login, password }, context) => {
       const query = {
-        login: encodeURIComponent(login),
-        password: encodeURIComponent(password)
+        login,
+        password
       };
       return fetch(context, "session", { method: "POST" }, query)
         .then(data => data.json())
@@ -38,6 +55,7 @@ const resolvers = {
       return fetch(context, "session", { method: "DELETE" })
         .then(res => {
           return {
+            status: res.status,
             success: res.status === 200,
             message: `${
               res.status === 200
@@ -51,4 +69,4 @@ const resolvers = {
   }
 };
 
-module.exports = resolvers;
+module.exports = { typeDefs, resolvers };

@@ -1,4 +1,4 @@
-const queryString = require("query-string");
+const qs = require("qs");
 const fetch = require("node-fetch");
 
 // export const getUserById = ({ id, token }) => {
@@ -20,18 +20,22 @@ const fetch = require("node-fetch");
 //     .catch(e => console.log(e));
 // };
 
-const fetchCbrainAPI = async (
+const fetchCbrainAPI = (
   context,
   route,
   fetchParams = { method: "GET" },
   query
 ) => {
   const { headers, ...rest } = fetchParams;
-  console.log(context, fetchParams, route);
+  console.log(
+    `${context.baseURL}${route}${
+      query ? "?" + qs.stringify(query, { encodeValuesOnly: true }) : ""
+    }`
+  );
 
   return fetch(
     `${context.baseURL}${route}${
-      query ? "?" + queryString.stringify(query) : ""
+      query ? "?" + qs.stringify(query, { encodeValuesOnly: true }) : ""
     }`,
     {
       headers: { ...context.headers, ...headers },

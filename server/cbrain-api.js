@@ -1,25 +1,6 @@
 const qs = require("qs");
 const fetch = require("node-fetch");
 
-// export const getUserById = ({ id, token }) => {
-//   fetch(`http://localhost:3005/users/${id}`, {
-//     headers: {
-//       accept: "application/json",
-//       "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
-//       "content-type": "application/x-www-form-urlencoded",
-//       authorization: `Bearer ${token}`
-//     },
-//     method: "GET",
-//     mode: "no-cors"
-//   })
-//     .then(x => x.json())
-//     .then(x => {
-//       console.log(x);
-//       return x;
-//     })
-//     .catch(e => console.log(e));
-// };
-
 const fetchCbrainAPI = (
   context,
   route,
@@ -27,6 +8,7 @@ const fetchCbrainAPI = (
   query
 ) => {
   const { headers, ...rest } = fetchParams;
+  //console.log("headers", context.headers);
   console.log(
     `${context.baseURL}${route}${
       query ? "?" + qs.stringify(query, { encodeValuesOnly: true }) : ""

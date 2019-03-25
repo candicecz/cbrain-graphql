@@ -46,13 +46,13 @@ const resolvers = {
       const allGroups = await fetch(context, "groups")
         .then(data => data.json())
         .then(groups => {
-          return groups.map(group => formGroup(group));
+          return groups.map(group => formData(group));
         })
         .catch(err => err);
       const groups = paginateResults({
         after,
         pageSize,
-        results: allGroups.reverse()
+        results: allGroups
       });
       return {
         groups,
@@ -64,7 +64,6 @@ const resolvers = {
       };
     },
     getGroup: (_, { id }, context) => {
-      console.log(id);
       return fetch(context, `groups/${id}`)
         .then(data => data.json())
         .then(group => group);
@@ -80,7 +79,7 @@ const resolvers = {
         { group: { ...input, site_id, creator_id } }
       )
         .then(data => data.json())
-        .then(group => formGroup(group))
+        .then(group => formData(group))
         .catch(err => err);
     },
     updateGroup: (_, { id, input }, context) => {
@@ -92,16 +91,14 @@ const resolvers = {
         { group: { ...input, site_id, creator_id } }
       )
         .then(data => data.json())
-        .then(group => formGroup(group))
-        .catch(err => console.log(err));
-      return;
+        .then(group => formData(group))
+        .catch(err => err);
     },
     deleteGroup: (_, { id }, context) => {
-      console.log(id);
       return fetch(context, `groups/${id}`, { method: "DELETE" })
         .then(res => {
-          console.log("RES", res);
           return {
+            status: res.status,
             success: res.status === 200,
             message: `${
               res.status === 200
@@ -110,14 +107,12 @@ const resolvers = {
             }`
           };
         })
-        .catch(err => {
-          console.log("err", err);
-        });
+        .catch(err => err);
     }
   }
 };
 
-const formGroup = group => {
+const formData = group => {
   return {
     id: group.id,
     name: group.name,

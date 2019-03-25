@@ -6,7 +6,6 @@ module.exports.paginateResults = ({
   getCursor = () => null
 }) => {
   if (pageSize < 1) return [];
-
   if (!cursor) return results.slice(0, pageSize);
   const cursorIndex = results.findIndex(item => {
     // if an item has a `cursor` on it, use that, otherwise try to generate one
@@ -24,6 +23,4 @@ module.exports.paginateResults = ({
           Math.min(results.length, cursorIndex + 1 + pageSize)
         )
     : results.slice(0, pageSize);
-
-  results.slice(cursorIndex >= 0 ? cursorIndex + 1 : 0, cursorIndex >= 0);
 };

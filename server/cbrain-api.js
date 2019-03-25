@@ -8,7 +8,7 @@ const fetchCbrainAPI = (
   query
 ) => {
   const { headers, ...rest } = fetchParams;
-  //console.log("headers", context.headers);
+  console.log("headers", context.headers);
   console.log(
     `${context.baseURL}${route}${
       query ? "?" + qs.stringify(query, { encodeValuesOnly: true }) : ""

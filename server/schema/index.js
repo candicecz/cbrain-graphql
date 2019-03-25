@@ -3,6 +3,7 @@ const R = require("ramda");
 const sessions = require("./sessions");
 const groups = require("./groups");
 const users = require("./users");
+const toolConfigs = require("./toolConfigs");
 
 const typeDefs = gql`
   type Query {
@@ -21,8 +22,19 @@ const typeDefs = gql`
 `;
 
 const schema = makeExecutableSchema({
-  typeDefs: [typeDefs, sessions.typeDefs, groups.typeDefs, users.typeDefs],
-  resolvers: [sessions.resolvers, groups.resolvers, users.resolvers]
+  typeDefs: [
+    typeDefs,
+    sessions.typeDefs,
+    groups.typeDefs,
+    users.typeDefs,
+    toolConfigs.typeDefs
+  ],
+  resolvers: [
+    sessions.resolvers,
+    groups.resolvers,
+    users.resolvers,
+    toolConfigs.resolvers
+  ]
 });
 
 module.exports = schema;

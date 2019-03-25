@@ -45,14 +45,20 @@ const resolvers = {
     getGroups: async (_, { pageSize, after }, context) => {
       const allGroups = await fetch(context, "groups")
         .then(data => data.json())
-        .then(groups => {
-          return groups.map(group => formData(group));
-        })
+        .then(groups => groups.map(group => formData(group)))
         .catch(err => err);
       const groups = paginateResults({
         after,
         pageSize,
         results: allGroups
+      });
+      console.log({
+        groups,
+        cursor: groups.length ? groups[groups.length - 1].cursor : null,
+        hasMore: groups.length
+          ? groups[groups.length - 1].cursor !==
+            allGroups[allGroups.length - 1].cursor
+          : false
       });
       return {
         groups,

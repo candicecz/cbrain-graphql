@@ -4,6 +4,8 @@ const sessions = require("./sessions");
 const groups = require("./groups");
 const users = require("./users");
 const toolConfigs = require("./toolConfigs");
+const tags = require("./tags");
+const bourreaux = require("./bourreaux");
 
 const typeDefs = gql`
   type Query {
@@ -17,7 +19,6 @@ const typeDefs = gql`
   type Response {
     status: Int
     success: Boolean!
-    message: String
   }
 `;
 
@@ -27,13 +28,17 @@ const schema = makeExecutableSchema({
     sessions.typeDefs,
     groups.typeDefs,
     users.typeDefs,
-    toolConfigs.typeDefs
+    toolConfigs.typeDefs,
+    tags.typeDefs,
+    bourreaux.typeDefs
   ],
   resolvers: [
     sessions.resolvers,
     groups.resolvers,
     users.resolvers,
-    toolConfigs.resolvers
+    toolConfigs.resolvers,
+    tags.resolvers,
+    bourreaux.resolvers
   ]
 });
 

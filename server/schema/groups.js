@@ -52,14 +52,6 @@ const resolvers = {
         pageSize,
         results: allGroups
       });
-      console.log({
-        groups,
-        cursor: groups.length ? groups[groups.length - 1].cursor : null,
-        hasMore: groups.length
-          ? groups[groups.length - 1].cursor !==
-            allGroups[allGroups.length - 1].cursor
-          : false
-      });
       return {
         groups,
         cursor: groups.length ? groups[groups.length - 1].cursor : null,
@@ -105,12 +97,7 @@ const resolvers = {
         .then(res => {
           return {
             status: res.status,
-            success: res.status === 200,
-            message: `${
-              res.status === 200
-                ? res.status + ": Project Successfully Deleted"
-                : res.status + ": Deletion Failed"
-            }`
+            success: res.status === 200
           };
         })
         .catch(err => err);

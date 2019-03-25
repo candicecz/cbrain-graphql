@@ -56,12 +56,7 @@ const resolvers = {
         .then(res => {
           return {
             status: res.status,
-            success: res.status === 200,
-            message: `${
-              res.status === 200
-                ? res.status + ": Logout Successful"
-                : res.status + ": Logout Failed"
-            }`
+            success: res.status === 200
           };
         })
         .catch(err => err);

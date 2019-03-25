@@ -114,8 +114,7 @@ const resolvers = {
         .then(res => {
           return {
             status: res.status,
-            success: res.status === 200,
-            message: message(res.status)
+            success: res.status === 200
           };
         })
         .catch(err => err);
@@ -139,26 +138,6 @@ const formData = user => {
     lastConnected: user.last_connected_at,
     accountLocked: user.accountLocked
   };
-};
-
-const message = status => {
-  switch (status) {
-    case 200:
-      return status + ": Project Successfully Deleted";
-    case 401:
-      return status + ": Deletion Failed - Not authorized to delete this user.";
-    case 404:
-      return (
-        status + ": Deletion Failed - User not found with the specified ID"
-      );
-    case 409:
-      return (
-        status +
-        ": Deletion Failed - 	User cannot be deleted, as it has resources allocated to them."
-      );
-    default:
-      return;
-  }
 };
 
 module.exports = { typeDefs, resolvers };

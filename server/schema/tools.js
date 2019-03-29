@@ -1,10 +1,22 @@
 const { gql } = require("apollo-server");
-const fetch = require("../cbrain-api");
-const { paginateResults } = require("../utils");
+const fetchCbrain = require("../cbrain-api");
+const {
+  paginateResults,
+  sortResults,
+  snakeKey,
+  camelKey
+} = require("../utils");
+
+const route = "tools";
 
 const typeDefs = gql`
   extend type Query {
-    getTools(pageSize: Int, after: String): ToolPagination!
+    getTools(
+      cursor: String
+      limit: Int
+      sortBy: ToolSort
+      orderBy: Order
+    ): ToolFeed!
   }
 
   type Tool {
@@ -19,49 +31,37 @@ const typeDefs = gql`
     url: String
   }
 
-  type ToolPagination {
+  type ToolFeed {
     cursor: String!
     hasMore: Boolean!
     tools: [Tool]!
+  }
+
+  enum ToolSort {
+    id
+    name
+    userIdgroupId
+    category
+    description
+    cbrainTaskName
+    url
   }
 `;
 
 const resolvers = {
   Query: {
-    getTools: async (_, { pageSize, after }, context) => {
-      const allTools = await fetch(context, "tools")
+    getTools: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+      const results = await fetchCbrain(context, route)
         .then(data => data.json())
-        .then(tools => tools.map(tool => formData(tool)))
-        .catch(err => err);
-      const tools = paginateResults({
-        after,
-        pageSize,
-        results: allTools
+        .then(tools => tools.map(tool => camelKey(tool)));
+      return paginateResults({
+        cursor,
+        limit,
+        results: sortResults({ sortBy, orderBy, results }),
+        route
       });
-      return {
-        tools,
-        cursor: tools.length ? tools[tools.length - 1].cursor : null,
-        hasMore: tools.length
-          ? tools[tools.length - 1].cursor !==
-            allTools[allTools.length - 1].cursor
-          : false
-      };
     }
   }
-};
-
-const formData = tool => {
-  return {
-    id: tool.id,
-    name: tool.name,
-    userId: tool.user_id,
-    groupId: tool.group_id,
-    category: tool.category,
-    description: tool.description,
-    cbrainTaskName: tool.cbrain_task_class_name,
-    menu: tool.select_menu_text,
-    url: tool.url
-  };
 };
 
 module.exports = { typeDefs, resolvers };

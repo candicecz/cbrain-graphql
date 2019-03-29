@@ -1,0 +1,2 @@
+[ ] API: in POST groups we should have creator id in response but it is not the case.
+- is groups creator id simply the user id?

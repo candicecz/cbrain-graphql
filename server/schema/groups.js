@@ -31,7 +31,7 @@ const typeDefs = gql`
     name: String!
     description: String
     type: String
-    siteId: Int
+    siteId: ID
     creatorId: Int
     invisible: Boolean
   }
@@ -41,7 +41,7 @@ const typeDefs = gql`
     name: String
     description: String
     type: String
-    siteId: Int
+    siteId: ID
     creatorId: Int
     invisible: Boolean
   }

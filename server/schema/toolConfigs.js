@@ -1,11 +1,23 @@
 const { gql } = require("apollo-server");
-const fetch = require("../cbrain-api");
-const { paginateResults } = require("../utils");
+const fetchCbrain = require("../cbrain-api");
+const {
+  paginateResults,
+  sortResults,
+  snakeKey,
+  camelKey
+} = require("../utils");
+
+const route = "tool_configs";
 
 const typeDefs = gql`
   extend type Query {
     getToolConfigById(id: ID!): ToolConfig
-    getToolConfigs(pageSize: Int, after: String): ToolConfigPagination!
+    getToolConfigs(
+      cursor: String
+      limit: Int
+      sortBy: ToolConfigSort
+      orderBy: Order
+    ): ToolConfigFeed!
   }
 
   type ToolConfig {
@@ -18,56 +30,45 @@ const typeDefs = gql`
     ncpus: Int
   }
 
-  type ToolConfigPagination {
+  type ToolConfigFeed {
     cursor: String!
     hasMore: Boolean!
-    toolconfigs: [ToolConfig]!
+    toolConfigs: [ToolConfig]!
+  }
+
+  enum ToolConfigSort {
+    id
+    version
+    description
+    toolId
+    bourreauId
+    groupId
+    ncpus
   }
 `;
 
 const resolvers = {
   Query: {
-    getToolConfigs: async (_, { pageSize, after }, context) => {
-      const allToolConfigs = await fetch(context, "tool_configs")
+    getToolConfigs: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+      const results = await fetchCbrain(context, route)
         .then(data => data.json())
         .then(toolconfigs =>
-          toolconfigs.map(toolconfig => formData(toolconfig))
-        )
-        .catch(err => err);
-      const toolconfigs = paginateResults({
-        after,
-        pageSize,
-        results: allToolConfigs
+          toolconfigs.map(toolconfig => camelKey(toolconfig))
+        );
+
+      return paginateResults({
+        cursor,
+        limit,
+        results: sortResults({ sortBy, orderBy, results }),
+        route
       });
-      return {
-        toolconfigs,
-        cursor: toolconfigs.length
-          ? toolconfigs[toolconfigs.length - 1].cursor
-          : null,
-        hasMore: toolconfigs.length
-          ? toolconfigs[toolconfigs.length - 1].cursor !==
-            allToolConfigs[allToolConfigs.length - 1].cursor
-          : false
-      };
     },
     getToolConfigById: (_, { id }, context) => {
-      return fetch(context, `tool_configs/${id}`)
+      return fetchCbrain(context, `${route}/${id}`)
         .then(data => data.json())
-        .then(toolconfig => formData(toolconfig));
+        .then(toolconfig => camelKey(toolconfig));
     }
   }
-};
-
-const formData = toolConfig => {
-  return {
-    id: toolConfig.id,
-    version: toolConfig.version_name,
-    description: toolConfig.description,
-    toolId: toolConfig.tool_id,
-    bourreauId: toolConfig.bourreau_id,
-    groupId: toolConfig.group_id,
-    ncpus: toolConfig.ncpus
-  };
 };
 
 module.exports = { typeDefs, resolvers };

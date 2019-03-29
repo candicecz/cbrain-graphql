@@ -14,7 +14,7 @@ const paginateResults = ({ cursor, limit = 10, results, route }) => {
       ? results[cursorIndex + limit].id
       : results[cursorIndex].id;
   return {
-    [`${route}`]:
+    [`${changeCase.camelCase(route)}`]:
       results.slice(
         cursorIndex,
         Math.min(results.length, cursorIndex + limit)

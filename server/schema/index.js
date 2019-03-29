@@ -10,6 +10,7 @@ const bourreaux = require("./bourreaux");
 const dataProviders = require("./dataProviders");
 const tasks = require("./tasks");
 const tools = require("./tools");
+const userfiles = require("./userfiles");
 
 const typeDefs = gql`
   type Query {
@@ -41,7 +42,8 @@ const schema = makeExecutableSchema({
     bourreaux.typeDefs,
     dataProviders.typeDefs,
     tasks.typeDefs,
-    tools.typeDefs
+    tools.typeDefs,
+    userfiles.typeDefs
   ],
   resolvers: [
     sessions.resolvers,
@@ -52,7 +54,8 @@ const schema = makeExecutableSchema({
     bourreaux.resolvers,
     dataProviders.resolvers,
     tasks.resolvers,
-    tools.resolvers
+    tools.resolvers,
+    userfiles.resolvers
   ]
 });
 

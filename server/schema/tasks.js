@@ -1,10 +1,21 @@
 const { gql } = require("apollo-server");
-const fetch = require("../cbrain-api");
-const { paginateResults } = require("../utils");
+const fetchCbrain = require("../cbrain-api");
+const {
+  paginateResults,
+  sortResults,
+  snakeKey,
+  camelKey
+} = require("../utils");
 
+const route = "tasks";
 const typeDefs = gql`
   extend type Query {
-    getTasks(pageSize: Int, after: String): TaskPagination!
+    getTasks(
+      cursor: String
+      limit: Int
+      sortBy: GroupSort
+      orderBy: Order
+    ): TaskFeed!
     getTaskById(id: ID!): Task
   }
 
@@ -27,7 +38,7 @@ const typeDefs = gql`
     runNumber: Int
     resultsDataProviderId: ID
     workdirArchived: String
-    workdirSize: Int
+    clusterWordirSize: Int
     workdirArchiveUserfileId: ID
   }
 
@@ -46,11 +57,11 @@ const typeDefs = gql`
     runNumber: Int
     resultsDataProviderId: ID
     workdirArchived: String
-    workdirSize: Int
+    clusterWordirSize: Int
     workdirArchiveUserfileId: ID
   }
 
-  type TaskPagination {
+  type TaskFeed {
     cursor: String!
     hasMore: Boolean!
     tasks: [Task]!
@@ -59,80 +70,40 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
-    getTasks: async (_, { pageSize, after }, context) => {
-      const allTasks = await fetch(context, "tasks")
+    getTasks: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+      const results = await fetchCbrain(context, route)
         .then(data => data.json())
-        .then(tasks => tasks.map(task => formData(task)))
-        .catch(err => err);
+        .then(tasks => tasks.map(task => camelKey(task)));
 
-      const tasks = paginateResults({
-        after,
-        pageSize,
-        results: allTasks
+      return paginateResults({
+        cursor,
+        limit,
+        results: sortResults({ sortBy, orderBy, results }),
+        route
       });
-
-      return {
-        tasks,
-        cursor: tasks.length ? tasks[tasks.length - 1].cursor : null,
-        hasMore: tasks.length
-          ? tasks[tasks.length - 1].cursor !==
-            allTasks[allTasks.length - 1].cursor
-          : false
-      };
     },
     getTaskById: (_, { id }, context) => {
-      return fetch(context, `tasks/${id}`)
+      return fetchCbrain(context, `${route}/${id}`)
         .then(data => data.json())
-        .then(task => formData(task));
+        .then(task => camelKey(task));
     }
   },
   Mutation: {
     createTask: (_, { input }, context) => {
-      const task = {
-        id: input.id,
-        type: input.type,
-        user_id: input.userId,
-        group_id: input.groupId,
-        bourreau_id: input.bourreauId,
-        tool_config_id: input.toolConfigId,
-        batch_id: input.batchId,
-        description: input.description,
-        status: input.status,
-        created_at: input.createdAt,
-        updated_at: input.updatedAt,
-        run_number: input.runNumber,
-        results_data_provider_id: input.resultsDataProviderId,
-        cluster_workdir_size: input.workdirSize,
-        workdir_archived: input.workdirArchived,
-        workdir_archive_userfile_id: input.workdirArchiveUserfileId
-      };
-      return fetch(context, "tasks", { method: "POST" }, { cbrain_task: task })
-        .then(data => data.json())
-        .then(task => formData(task))
-        .catch(err => err);
+      console.log(input);
+      return fetchCbrain(
+        context,
+        route,
+        { method: "POST" },
+        { cbrain_task: snakeKey(input) }
+      )
+        .then(data => {
+          console.log("data");
+          return data.json();
+        })
+        .then(task => camelKey(task));
     }
   }
-};
-
-const formData = task => {
-  return {
-    id: task.id,
-    type: task.type,
-    userId: task.user_id,
-    groupId: task.group_id,
-    bourreauId: task.bourreau_id,
-    toolConfigId: task.tool_config_id,
-    batchId: task.batch_id,
-    description: task.description,
-    status: task.status,
-    createdAt: task.created_at,
-    updatedAt: task.updated_at,
-    runNumber: task.run_number,
-    resultsDataProviderId: task.results_data_provider_id,
-    workdirArchived: task.workdir_archived,
-    workdirSize: task.cluster_workdir_size,
-    workdirArchiveUserfileId: task.workdir_archive_userfile_id
-  };
 };
 
 module.exports = { typeDefs, resolvers };

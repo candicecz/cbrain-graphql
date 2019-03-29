@@ -1,11 +1,19 @@
 const { gql } = require("apollo-server");
-const fetch = require("../cbrain-api");
-const { paginateResults } = require("../utils");
+const fetchCbrain = require("../cbrain-api");
+const { paginateResults, sortResults, camelKey } = require("../utils");
+
+const route = "bourreaux";
 
 const typeDefs = gql`
   extend type Query {
-    getBourreau(id: ID!): Bourreau
-    getBourreaux(pageSize: Int, after: String): BourreauPagination!
+    getBourreauById(id: ID!): Bourreau
+
+    getBourreaux(
+      cursor: String
+      limit: Int
+      sortBy: BourreauSort
+      orderBy: Order
+    ): BourreauFeed!
   }
 
   type Bourreau {
@@ -18,54 +26,40 @@ const typeDefs = gql`
     description: String
   }
 
-  type BourreauPagination {
+  type BourreauFeed {
     cursor: String!
     hasMore: Boolean!
-    bourreaux: [Bourreau]!
+    bourreaux: [Bourreau]
+  }
+
+  enum BourreauSort {
+    id
+    name
+    userId
+    groupId
+    description
   }
 `;
 
 const resolvers = {
   Query: {
-    getBourreaux: async (_, { pageSize, after }, context) => {
-      const allBourreaux = await fetch(context, "bourreaux")
+    getBourreaux: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+      const results = await fetchCbrain(context, route)
         .then(data => data.json())
-        .then(bourreaux => bourreaux.map(bourreau => formData(bourreau)))
-        .catch(err => err);
-      const bourreaux = paginateResults({
-        after,
-        pageSize,
-        results: allBourreaux
+        .then(bourreaux => bourreaux.map(bourreau => camelKey(bourreau)));
+      return paginateResults({
+        cursor,
+        limit,
+        results: sortResults({ sortBy, orderBy, results }),
+        route
       });
-      return {
-        bourreaux,
-        cursor: bourreaux.length
-          ? bourreaux[bourreaux.length - 1].cursor
-          : null,
-        hasMore: bourreaux.length
-          ? bourreaux[bourreaux.length - 1].cursor !==
-            allBourreaux[allBourreaux.length - 1].cursor
-          : false
-      };
     },
-    getBourreau: (_, { id }, context) => {
-      return fetch(context, `bourreaux/${id}`)
+    getBourreauById: (_, { id }, context) => {
+      return fetchCbrain(context, `${route}/${id}`)
         .then(data => data.json())
-        .then(bourreau => formData(bourreau));
+        .then(bourreau => camelKey(bourreau));
     }
   }
-};
-
-const formData = bourreau => {
-  return {
-    id: bourreau.id,
-    name: bourreau.name,
-    userId: bourreau.user_id,
-    groupId: bourreau.group_id,
-    online: bourreau.online,
-    readOnly: bourreau.read_only,
-    description: bourreau.description
-  };
 };
 
 module.exports = { typeDefs, resolvers };

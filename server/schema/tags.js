@@ -1,11 +1,23 @@
 const { gql } = require("apollo-server");
-const fetch = require("../cbrain-api");
-const { paginateResults } = require("../utils");
+const fetchCbrain = require("../cbrain-api");
+const {
+  paginateResults,
+  sortResults,
+  snakeKey,
+  camelKey
+} = require("../utils");
+
+const route = "tags";
 
 const typeDefs = gql`
   extend type Query {
-    getTag(id: ID!): Tag
-    getTags(pageSize: Int, after: String): TagPagination!
+    getTagById(id: ID!): Tag
+    getTags(
+      cursor: String
+      limit: Int
+      sortBy: GroupSort
+      orderBy: Order
+    ): TagFeed!
   }
 
   extend type Mutation {
@@ -28,52 +40,49 @@ const typeDefs = gql`
     groupId: ID
   }
 
-  type TagPagination {
+  type TagFeed {
     cursor: String!
     hasMore: Boolean!
     tags: [Tag]!
+  }
+
+  enum TagSort {
+    id
+    name
+    userId
+    groupId
   }
 `;
 
 const resolvers = {
   Query: {
-    getTags: async (_, { pageSize, after }, context) => {
-      const allTags = await fetch(context, "tags")
+    getTags: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+      const results = await fetchCbrain(context, route)
         .then(data => data.json())
-        .then(tags => tags.map(tag => formData(tag)))
-        .catch(err => err);
-      const tags = paginateResults({
-        after,
-        pageSize,
-        results: allTags
+        .then(tags => tags.map(tag => camelKey(tag)));
+      return paginateResults({
+        cursor,
+        limit,
+        results: sortResults({ sortBy, orderBy, results }),
+        route
       });
-      return {
-        tags,
-        cursor: tags.length ? tags[tags.length - 1].cursor : null,
-        hasMore: tags.length
-          ? tags[tags.length - 1].cursor !== allTags[allTags.length - 1].cursor
-          : false
-      };
     },
-    getTag: (_, { id }, context) => {
-      return fetch(context, `tags/${id}`)
+    getTagById: (_, { id }, context) => {
+      return fetchCbrain(context, `${route}/${id}`)
         .then(data => data.json())
-        .then(tag => {
-          return formData(tag);
-        })
-        .catch(err => err);
+        .then(tag => camelKey(tag));
     }
   },
   Mutation: {
     createTag: (_, { input }, context) => {
-      const tag = {
-        ...input,
-        user_id: input.userId,
-        group_id: input.groupId
-      };
-      return fetch(context, "tags", { method: "POST" }, { tag })
+      return fetchCbrain(
+        context,
+        `${route}`,
+        { method: "POST" },
+        { tag: snakeKey(input) }
+      )
         .then(data => data.json())
-        .then(tag => formData(tag));
+        .then(tag => camelKey(tag));
     },
     updateTag: (_, { id, input }, context) => {
       const tag = {
@@ -81,31 +90,21 @@ const resolvers = {
         user_id: input.userId,
         group_id: input.groupId
       };
-      return fetch(context, `tags/${id}`, { method: "PUT" }, { tag })
+      return fetchCbrain(context, `${route}/${id}`, { method: "PUT" }, { tag })
         .then(data => data.json())
-        .then(tag => formData(tag))
-        .catch(err => err);
+        .then(tag => camelKey(tag));
     },
     deleteTag: (_, { id }, context) => {
-      return fetch(context, `tags/${id}`, { method: "DELETE" })
-        .then(res => {
+      return fetchCbrain(context, `${route}/${id}`, { method: "DELETE" }).then(
+        res => {
           return {
             status: res.status,
             success: res.status === 200
           };
-        })
-        .catch(err => err);
+        }
+      );
     }
   }
-};
-
-const formData = tag => {
-  return {
-    id: tag.id,
-    name: tag.name,
-    userId: tag.user_id,
-    groupId: tag.group_id
-  };
 };
 
 module.exports = { typeDefs, resolvers };

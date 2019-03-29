@@ -4,7 +4,9 @@
   "dependencies": {
     "apollo-datasource-rest": "^0.3.2",
     "apollo-server": "2.1.0",
+    "change-case": "^3.1.0",
     "graphql": "14.0.2",
+    "graphql-tools": "^4.0.4",
     "node-fetch": "^2.3.0",
     "nodemon": "^1.18.10",
     "qs": "^6.6.0",
@@ -15,6 +17,5 @@
   "scripts": {
     "start": "nodemon index.js localhost 4000"
   },
-  "keywords": [],
-  "devDependencies": {}
+  "keywords": []
 }

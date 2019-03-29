@@ -1,5 +1,5 @@
 const { gql } = require("apollo-server");
-const fetch = require("../cbrain-api");
+const fetchCbrain = require("../cbrain-api");
 
 const typeDefs = gql`
   extend type Query {
@@ -20,7 +20,7 @@ const typeDefs = gql`
 const resolvers = {
   Query: {
     session: (_, __, context) => {
-      return fetch(context, "session")
+      return fetchCbrain(context, "session")
         .then(data => data.json())
         .then(session => {
           return {
@@ -42,7 +42,7 @@ const resolvers = {
         login,
         password
       };
-      return fetch(context, "session", { method: "POST" }, query)
+      return fetchCbrain(context, "session", { method: "POST" }, query)
         .then(data => data.json())
         .then(session => {
           return {
@@ -52,7 +52,7 @@ const resolvers = {
         });
     },
     logout: (_, __, context) => {
-      return fetch(context, "session", { method: "DELETE" })
+      return fetchCbrain(context, "session", { method: "DELETE" })
         .then(res => {
           return {
             status: res.status,

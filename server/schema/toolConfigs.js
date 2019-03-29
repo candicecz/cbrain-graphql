@@ -4,7 +4,7 @@ const { paginateResults } = require("../utils");
 
 const typeDefs = gql`
   extend type Query {
-    getToolConfig(id: ID!): ToolConfig
+    getToolConfigById(id: ID!): ToolConfig
     getToolConfigs(pageSize: Int, after: String): ToolConfigPagination!
   }
 
@@ -50,7 +50,7 @@ const resolvers = {
           : false
       };
     },
-    getToolConfig: (_, { id }, context) => {
+    getToolConfigById: (_, { id }, context) => {
       return fetch(context, `tool_configs/${id}`)
         .then(data => data.json())
         .then(toolconfig => formData(toolconfig));

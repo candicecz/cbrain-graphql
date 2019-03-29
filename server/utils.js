@@ -1,26 +1,65 @@
-module.exports.paginateResults = ({
-  after: cursor,
-  pageSize = 20,
-  results,
-  // can pass in a function to calculate an item's cursor
-  getCursor = () => null
-}) => {
-  if (pageSize < 1) return [];
-  if (!cursor) return results.slice(0, pageSize);
-  const cursorIndex = results.findIndex(item => {
-    // if an item has a `cursor` on it, use that, otherwise try to generate one
-    let itemCursor = item.cursor ? item.cursor : getCursor(item);
+const R = require("ramda");
+const changeCase = require("change-case");
 
-    // if there's still not a cursor, return false by default
-    return itemCursor ? cursor === itemCursor : false;
-  });
+const paginateResults = ({ cursor, limit = 10, results, route }) => {
+  if (!results.length || limit < 1)
+    return { [`${route}`]: results, cursor: 0, hasMore: false };
+  if (!cursor) {
+    cursor = results[0].id;
+  }
+  cursor = parseInt(cursor);
+  const cursorIndex = R.findIndex(R.propEq("id", cursor))(results);
+  const newCursor =
+    cursorIndex + limit < results.length
+      ? results[cursorIndex + limit].id
+      : results[cursorIndex].id;
+  return {
+    [`${route}`]:
+      results.slice(
+        cursorIndex,
+        Math.min(results.length, cursorIndex + limit)
+      ) || [],
+    cursor: newCursor,
+    hasMore: cursorIndex + limit <= results.length ? true : false
+  };
+};
 
-  return cursorIndex >= 0
-    ? cursorIndex === results.length - 1 // don't let us overflow
-      ? []
-      : results.slice(
-          cursorIndex + 1,
-          Math.min(results.length, cursorIndex + 1 + pageSize)
-        )
-    : results.slice(0, pageSize);
+const sortResults = ({ sortBy, orderBy = "ASC", results }) => {
+  if (!sortBy) return results;
+  const formatted = f => (R.type(f) === "String" ? R.toLower(f) : f);
+  const ordered = values => (orderBy === "ASC" ? R.ascend : R.descend)(values);
+  return R.sort(
+    ordered(
+      R.compose(
+        formatted,
+        R.prop(`${sortBy}`)
+      )
+    ),
+    results
+  );
+};
+
+/* 
+  Object Formatting [camelKey + snakeKey]: 
+  Request keys must be snaked for the api calls
+  and camelcased for the schema types.
+*/
+
+const snakeKey = obj => {
+  return R.fromPairs(
+    Object.entries(obj).map(([k, v]) => [changeCase.snakeCase(k), v])
+  );
+};
+
+const camelKey = obj => {
+  return R.fromPairs(
+    Object.entries(obj).map(([k, v]) => [changeCase.camelCase(k), v])
+  );
+};
+
+module.exports = {
+  snakeKey,
+  camelKey,
+  sortResults,
+  paginateResults
 };

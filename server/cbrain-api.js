@@ -1,21 +1,15 @@
 const qs = require("qs");
 const fetch = require("node-fetch");
 
-const fetchCbrainAPI = (
+const fetchCbrain = async (
   context,
   route,
   fetchParams = { method: "GET" },
   query
 ) => {
   const { headers, ...rest } = fetchParams;
-  console.log("headers", context.headers);
-  console.log(
-    `${context.baseURL}${route}${
-      query ? "?" + qs.stringify(query, { encodeValuesOnly: true }) : ""
-    }`
-  );
 
-  return fetch(
+  let res = await fetch(
     `${context.baseURL}${route}${
       query ? "?" + qs.stringify(query, { encodeValuesOnly: true }) : ""
     }`,
@@ -24,6 +18,11 @@ const fetchCbrainAPI = (
       ...rest
     }
   );
+
+  if (res.status !== 200 && res.status !== 201) {
+    throw new Error("Fetch Failed");
+  }
+  return res;
 };
 
-module.exports = fetchCbrainAPI;
+module.exports = fetchCbrain;

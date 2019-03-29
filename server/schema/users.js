@@ -4,7 +4,7 @@ const { paginateResults } = require("../utils");
 
 const typeDefs = gql`
   extend type Query {
-    getUser(id: ID!): User
+    getUserById(id: ID!): User
     getUsers(pageSize: Int, after: String): UserPagination!
   }
 
@@ -74,7 +74,7 @@ const resolvers = {
           : false
       };
     },
-    getUser: (_, { id }, context) => {
+    getUserById: (_, { id }, context) => {
       return fetch(context, `users/`, { method: "GET" }, { id })
         .then(data => data.json())
         .then(user => formData(user[0]))

@@ -1,21 +1,34 @@
 const { gql } = require("apollo-server");
-const fetch = require("../cbrain-api");
-const { paginateResults } = require("../utils");
+const fetchCbrain = require("../cbrain-api");
+const {
+  paginateResults,
+  sortResults,
+  snakeKey,
+  camelKey
+} = require("../utils");
+
+const route = "groups";
 
 const typeDefs = gql`
   extend type Query {
-    getGroups(pageSize: Int, after: String): GroupPagination!
-    getGroup(id: ID!): Group
+    getGroupById(id: ID!): Group
+    getGroups(
+      cursor: String
+      limit: Int
+      sortBy: GroupSort
+      orderBy: Order
+    ): GroupFeed!
   }
+
   extend type Mutation {
     createGroup(input: GroupInput): Group
     deleteGroup(id: ID!): Response
-    updateGroup(id: ID!, input: GroupInput): Group
+    updateGroup(id: ID!, input: GroupInput): Response
   }
 
   input GroupInput {
     id: ID
-    name: String
+    name: String!
     description: String
     type: String
     siteId: Int
@@ -33,88 +46,77 @@ const typeDefs = gql`
     invisible: Boolean
   }
 
-  type GroupPagination {
+  type GroupFeed {
     cursor: String!
     hasMore: Boolean!
     groups: [Group]!
+  }
+
+  enum GroupSort {
+    id
+    name
+    description
+    creator
+    siteId
   }
 `;
 
 const resolvers = {
   Query: {
-    getGroups: async (_, { pageSize, after }, context) => {
-      const allGroups = await fetch(context, "groups")
+    getGroups: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+      const results = await fetchCbrain(context, route)
         .then(data => data.json())
-        .then(groups => groups.map(group => formData(group)))
-        .catch(err => err);
-      const groups = paginateResults({
-        after,
-        pageSize,
-        results: allGroups
+        .then(groups => groups.map(group => camelKey(group)));
+
+      return paginateResults({
+        cursor,
+        limit,
+        results: sortResults({ sortBy, orderBy, results }),
+        route
       });
-      return {
-        groups,
-        cursor: groups.length ? groups[groups.length - 1].cursor : null,
-        hasMore: groups.length
-          ? groups[groups.length - 1].cursor !==
-            allGroups[allGroups.length - 1].cursor
-          : false
-      };
     },
-    getGroup: (_, { id }, context) => {
-      return fetch(context, `groups/${id}`)
+    getGroupById: (_, { id }, context) => {
+      return fetchCbrain(context, `${route}/${id}`)
         .then(data => data.json())
-        .then(group => group);
+        .then(group => camelKey(group));
     }
   },
+
   Mutation: {
     createGroup: (_, { input }, context) => {
-      const { siteId: site_id, creatorId: creator_id } = input;
-      return fetch(
+      return fetchCbrain(
         context,
-        "groups",
+        route,
         { method: "POST" },
-        { group: { ...input, site_id, creator_id } }
+        { group: snakeKey(input) }
       )
         .then(data => data.json())
-        .then(group => formData(group))
-        .catch(err => err);
+        .then(group => camelKey(group));
     },
     updateGroup: (_, { id, input }, context) => {
-      const { siteId: site_id, creatorId: creator_id } = input;
-      return fetch(
+      return fetchCbrain(
         context,
-        `groups/${id}`,
+        `${route}/${id}`,
         { method: "PUT" },
-        { group: { ...input, site_id, creator_id } }
-      )
-        .then(data => data.json())
-        .then(group => formData(group))
-        .catch(err => err);
+        { group: snakeKey(input) }
+      ).then(res => {
+        return {
+          status: res.status,
+          success: res.status === 200
+        };
+      });
     },
     deleteGroup: (_, { id }, context) => {
-      return fetch(context, `groups/${id}`, { method: "DELETE" })
-        .then(res => {
+      return fetchCbrain(context, `${route}/${id}`, { method: "DELETE" }).then(
+        res => {
           return {
             status: res.status,
             success: res.status === 200
           };
-        })
-        .catch(err => err);
+        }
+      );
     }
   }
-};
-
-const formData = group => {
-  return {
-    id: group.id,
-    name: group.name,
-    description: group.description,
-    type: group.type,
-    siteId: group.site_id,
-    creatorId: group.creator_id,
-    invisible: group.invisible
-  };
 };
 
 module.exports = { typeDefs, resolvers };

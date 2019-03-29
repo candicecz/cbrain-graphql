@@ -1,4 +1,5 @@
-const { gql, makeExecutableSchema } = require("apollo-server");
+const { gql } = require("apollo-server");
+const { makeExecutableSchema } = require("graphql-tools");
 const R = require("ramda");
 const sessions = require("./sessions");
 const groups = require("./groups");
@@ -6,6 +7,9 @@ const users = require("./users");
 const toolConfigs = require("./toolConfigs");
 const tags = require("./tags");
 const bourreaux = require("./bourreaux");
+const dataProviders = require("./dataProviders");
+const tasks = require("./tasks");
+const tools = require("./tools");
 
 const typeDefs = gql`
   type Query {
@@ -20,6 +24,10 @@ const typeDefs = gql`
     status: Int
     success: Boolean!
   }
+  enum Order {
+    ASC
+    DESC
+  }
 `;
 
 const schema = makeExecutableSchema({
@@ -30,7 +38,10 @@ const schema = makeExecutableSchema({
     users.typeDefs,
     toolConfigs.typeDefs,
     tags.typeDefs,
-    bourreaux.typeDefs
+    bourreaux.typeDefs,
+    dataProviders.typeDefs,
+    tasks.typeDefs,
+    tools.typeDefs
   ],
   resolvers: [
     sessions.resolvers,
@@ -38,7 +49,10 @@ const schema = makeExecutableSchema({
     users.resolvers,
     toolConfigs.resolvers,
     tags.resolvers,
-    bourreaux.resolvers
+    bourreaux.resolvers,
+    dataProviders.resolvers,
+    tasks.resolvers,
+    tools.resolvers
   ]
 });
 

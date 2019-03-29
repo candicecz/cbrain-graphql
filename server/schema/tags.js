@@ -15,7 +15,7 @@ const typeDefs = gql`
     getTags(
       cursor: String
       limit: Int
-      sortBy: GroupSort
+      sortBy: TagSort
       orderBy: Order
     ): TagFeed!
   }
@@ -23,12 +23,12 @@ const typeDefs = gql`
   extend type Mutation {
     createTag(input: TagInput): Tag
     deleteTag(id: ID!): Response
-    updateTag(id: ID!, input: TagInput): Tag
+    updateTag(id: ID!, input: TagInput): Response
   }
 
   input TagInput {
     id: ID
-    name: String
+    name: String!
     userId: ID
     groupId: ID
   }
@@ -85,23 +85,19 @@ const resolvers = {
         .then(tag => camelKey(tag));
     },
     updateTag: (_, { id, input }, context) => {
-      const tag = {
-        ...input,
-        user_id: input.userId,
-        group_id: input.groupId
-      };
-      return fetchCbrain(context, `${route}/${id}`, { method: "PUT" }, { tag })
-        .then(data => data.json())
-        .then(tag => camelKey(tag));
+      return fetchCbrain(
+        context,
+        `${route}/${id}`,
+        { method: "PUT" },
+        { tag: snakeKey(input) }
+      ).then(res => ({ status: res.status, success: res.status === 200 }));
     },
     deleteTag: (_, { id }, context) => {
       return fetchCbrain(context, `${route}/${id}`, { method: "DELETE" }).then(
-        res => {
-          return {
-            status: res.status,
-            success: res.status === 200
-          };
-        }
+        res => ({
+          status: res.status,
+          success: res.status === 200
+        })
       );
     }
   }

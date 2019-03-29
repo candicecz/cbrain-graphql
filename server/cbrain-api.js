@@ -18,7 +18,6 @@ const fetchCbrain = async (
       ...rest
     }
   );
-
   if (res.status !== 200 && res.status !== 201) {
     throw new Error("Fetch Failed");
   }

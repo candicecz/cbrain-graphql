@@ -1,20 +1,45 @@
 const { gql } = require("apollo-server");
-const fetch = require("../cbrain-api");
-const { paginateResults } = require("../utils");
+const fetchCbrain = require("../cbrain-api");
+const {
+  paginateResults,
+  sortResults,
+  snakeKey,
+  camelKey
+} = require("../utils");
 
+const route = "users";
+
+/* 
+Note: There are two types of input: UserInput and UpdateUserInput 
+which are used for create and update respectively. They each contain
+fields UserInfo and UpdateUserInfo. The reasons for this is that
+they have different required fields and we shouldn't ask the user to input
+a password if they want to edit their profile.
+*/
 const typeDefs = gql`
   extend type Query {
     getUserById(id: ID!): User
-    getUsers(pageSize: Int, after: String): UserPagination!
+    getUsers(
+      cursor: String
+      limit: Int
+      sortBy: UserSort
+      orderBy: Order
+    ): UserFeed!
   }
 
   extend type Mutation {
-    createUser(input: UserInput): User
+    createUser(input: UserInput): Response
     deleteUser(id: ID!): Response
-    updateUser(id: ID!, input: UserInput): User
+    updateUser(id: ID!, input: UpdateUserInput): User
   }
 
   input UserInput {
+    user: UserInfo
+    noPasswordResetNeeded: Int
+    forcePasswordReset: Boolean
+  }
+
+  input UserInfo {
     id: ID
     login: String!
     password: String!
@@ -24,9 +49,31 @@ const typeDefs = gql`
     city: String
     country: String
     timeZone: String
+    type: String!
+    siteId: Int
+    lastConnectedAt: String
+    accountLocked: String
+  }
+
+  input UpdateUserInput {
+    user: UpdateUserInfo
+    noPasswordResetNeeded: Int
+    forcePasswordReset: Boolean
+  }
+
+  input UpdateUserInfo {
+    id: ID
+    login: String
+    password: String
+    passwordConfirmation: String
+    fullName: String
+    email: String
+    city: String
+    country: String
+    timeZone: String
     type: String
     siteId: Int
-    lastConnected: String
+    lastConnectedAt: String
     accountLocked: String
   }
 
@@ -42,102 +89,93 @@ const typeDefs = gql`
     timeZone: String
     type: String
     siteId: Int
-    lastConnected: String
+    lastConnectedAt: String
     accountLocked: String
   }
 
-  type UserPagination {
+  type UserFeed {
     cursor: String!
     hasMore: Boolean!
     users: [User]!
+  }
+
+  enum UserSort {
+    id
+    login
+    fullName
+    email
+    city
+    country
+    lastConnection
+    type
+    siteId
+    lastConnectedAt
   }
 `;
 
 const resolvers = {
   Query: {
-    getUsers: async (_, { pageSize, after }, context) => {
-      const allUsers = await fetch(context, "users")
+    getUsers: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+      const results = await fetchCbrain(context, "users")
         .then(data => data.json())
-        .then(users => users.map(user => formData(user)))
-        .catch(err => err);
-      const users = paginateResults({
-        after,
-        pageSize,
-        results: allUsers
+        .then(users => users.map(user => camelKey(user)));
+      return paginateResults({
+        cursor,
+        limit,
+        results: sortResults({ sortBy, orderBy, results }),
+        route
       });
-      return {
-        users,
-        cursor: users.length ? users[users.length - 1].cursor : null,
-        hasMore: users.length
-          ? users[users.length - 1].cursor !==
-            allUsers[allUsers.length - 1].cursor
-          : false
-      };
     },
     getUserById: (_, { id }, context) => {
-      return fetch(context, `users/`, { method: "GET" }, { id })
+      return fetchCbrain(context, `${route}/${id}`)
         .then(data => data.json())
-        .then(user => formData(user[0]))
-        .catch(err => err);
+        .then(user => camelKey(user));
     }
   },
   Mutation: {
     createUser: (_, { input }, context) => {
-      const user = {
-        ...input,
-        password_confirmation: input.passwordConfirmation,
-        full_name: input.fullName,
-        time_zone: input.timeZone,
-        site_id: input.siteId,
-        last_connecte_at: input.lastConnected
-      };
-      return fetch(context, "users", { method: "POST" }, { user })
-        .then(data => data.json())
-        .then(user => formData(user));
+      const { user, ...rest } = snakeKey(input);
+      return fetchCbrain(
+        context,
+        route,
+        { method: "POST" },
+        {
+          user: snakeKey(user),
+          ...rest
+        }
+      ).then(res => {
+        return {
+          status: res.status,
+          success: res.status === 200
+        };
+      });
     },
     updateUser: (_, { id, input }, context) => {
-      const user = {
-        ...input,
-        password_confirmation: input.passwordConfirmation,
-        full_name: input.fullName,
-        time_zone: input.timeZone,
-        site_id: input.siteId,
-        last_connected_at: input.lastConnected
-      };
-      return fetch(context, `users/${id}`, { method: "PUT" }, { user })
+      const { user, ...rest } = snakeKey(input);
+
+      return fetchCbrain(
+        context,
+        `${route}/${id}`,
+        { method: "PUT" },
+        {
+          user: snakeKey(user),
+          ...rest
+        }
+      )
         .then(data => data.json())
-        .then(user => formData(user))
-        .catch(err => err);
+        .then(user => camelKey(user));
     },
     deleteUser: (_, { id }, context) => {
-      return fetch(context, `users/${id}`, { method: "DELETE" })
-        .then(res => {
+      return fetchCbrain(context, `${route}/${id}`, { method: "DELETE" }).then(
+        res => {
           return {
             status: res.status,
             success: res.status === 200
           };
-        })
-        .catch(err => err);
+        }
+      );
     }
   }
-};
-
-const formData = user => {
-  return {
-    id: user.id,
-    login: user.login,
-    password: user.password,
-    passwordConfirmation: user.password_confirmation,
-    fullName: user.full_name,
-    email: user.email,
-    city: user.city,
-    country: user.country,
-    timeZone: user.time_zone,
-    type: user.type,
-    siteId: user.site_id,
-    lastConnected: user.last_connected_at,
-    accountLocked: user.accountLocked
-  };
 };
 
 module.exports = { typeDefs, resolvers };

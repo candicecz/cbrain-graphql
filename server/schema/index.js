@@ -1,5 +1,6 @@
 const { gql } = require("apollo-server");
 const { makeExecutableSchema } = require("graphql-tools");
+const GraphQLJSON = require("graphql-type-json");
 const R = require("ramda");
 const sessions = require("./sessions");
 const groups = require("./groups");
@@ -29,6 +30,7 @@ const typeDefs = gql`
     ASC
     DESC
   }
+  scalar JSON
 `;
 
 const schema = makeExecutableSchema({
@@ -55,7 +57,8 @@ const schema = makeExecutableSchema({
     dataProviders.resolvers,
     tasks.resolvers,
     tools.resolvers,
-    userfiles.resolvers
+    userfiles.resolvers,
+    { JSON: GraphQLJSON }
   ]
 });
 

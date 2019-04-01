@@ -31,15 +31,16 @@ const typeDefs = gql`
     bourreauId: ID
     toolConfigId: ID
     batchId: ID
-    description: String
+    params: JSON
     status: String
     createdAt: String
     updatedAt: String
     runNumber: Int
     resultsDataProviderId: ID
-    workdirArchived: String
     clusterWordirSize: Int
+    workdirArchived: String
     workdirArchiveUserfileId: ID
+    description: String
   }
 
   type Task {
@@ -50,15 +51,16 @@ const typeDefs = gql`
     bourreauId: ID
     toolConfigId: ID
     batchId: ID
-    description: String
+    params: JSON
     status: String
     createdAt: String
     updatedAt: String
     runNumber: Int
     resultsDataProviderId: ID
-    workdirArchived: String
     clusterWordirSize: Int
+    workdirArchived: String
     workdirArchiveUserfileId: ID
+    description: String
   }
 
   type TaskFeed {
@@ -90,18 +92,15 @@ const resolvers = {
   },
   Mutation: {
     createTask: (_, { input }, context) => {
-      console.log(input);
+      const { user } = context;
       return fetchCbrain(
         context,
         route,
         { method: "POST" },
-        { cbrain_task: snakeKey(input) }
+        { cbrain_task: snakeKey({ ...input, userId: user.userId }) }
       )
-        .then(data => {
-          console.log("data");
-          return data.json();
-        })
-        .then(task => camelKey(task));
+        .then(data => data.json())
+        .then(task => camelKey(task[0]));
     }
   }
 };

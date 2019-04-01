@@ -17,9 +17,6 @@ const typeDefs = gql`
     isAliveDataProvider(id: ID!): Alive
   }
 
-  #   extend type Mutation {
-  #   }
-
   type UserFile {
     id: ID
     name: String
@@ -96,6 +93,3 @@ const resolvers = {
 };
 
 module.exports = { typeDefs, resolvers };
-
-// NOTE :
-// Need to test all again when userfiles is done.

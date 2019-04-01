@@ -21,9 +21,9 @@ const server = new ApolloServer({
       baseURL,
       headers: {
         ...headers,
-        authorization: req.headers.authorization || "",
-        user
-      }
+        authorization: req.headers.authorization || ""
+      },
+      user
     };
   },
   schema

@@ -84,21 +84,24 @@ const resolvers = {
 
   Mutation: {
     createGroup: (_, { input }, context) => {
+      const { user } = context;
       return fetchCbrain(
         context,
         route,
         { method: "POST" },
-        { group: snakeKey(input) }
+        { group: snakeKey({ ...input, creatorId: user.userId }) }
       )
         .then(data => data.json())
         .then(group => camelKey(group));
     },
     updateGroup: (_, { id, input }, context) => {
+      const { user } = context;
+
       return fetchCbrain(
         context,
         `${route}/${id}`,
         { method: "PUT" },
-        { group: snakeKey(input) }
+        { group: snakeKey({ ...input, creatorId: user.userId }) }
       ).then(res => {
         return {
           status: res.status,

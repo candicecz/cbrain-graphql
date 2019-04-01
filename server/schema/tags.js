@@ -75,21 +75,24 @@ const resolvers = {
   },
   Mutation: {
     createTag: (_, { input }, context) => {
+      const { user } = context;
       return fetchCbrain(
         context,
         `${route}`,
         { method: "POST" },
-        { tag: snakeKey(input) }
+        { tag: snakeKey({ ...input, user: user.userId }) }
       )
         .then(data => data.json())
         .then(tag => camelKey(tag));
     },
     updateTag: (_, { id, input }, context) => {
+      const { user } = context;
+
       return fetchCbrain(
         context,
         `${route}/${id}`,
         { method: "PUT" },
-        { tag: snakeKey(input) }
+        { tag: snakeKey({ ...input, user: user.userId }) }
       ).then(res => ({ status: res.status, success: res.status === 200 }));
     },
     deleteTag: (_, { id }, context) => {

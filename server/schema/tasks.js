@@ -107,17 +107,3 @@ const resolvers = {
 };
 
 module.exports = { typeDefs, resolvers };
-// "type": String
-//     "userId": ID
-//     "groupId": ID
-//     "bourreauId": ID
-//     "toolConfigId": ID
-//     "batchId": ID
-//     "description": String
-//     "status": String
-//     "createdAt": String
-//     "updatedAt": String
-//     "runNumber": Int
-//     "resultsDataProviderId": ID
-//     "workdirSize": Int
-//     "workdirArchiveUserfileId": ID

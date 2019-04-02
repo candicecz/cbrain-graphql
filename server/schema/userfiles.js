@@ -1,4 +1,5 @@
 const { gql } = require("apollo-server");
+const FormData = require('form-data');
 const fetchCbrain = require("../cbrain-api");
 const {
   paginateResults,
@@ -13,7 +14,7 @@ const typeDefs = gql`
   extend type Query {
     getUserfileById(id: ID!): Userfile
     getUserfiles(
-      cursor: String
+      cursor: Int 
       limit: Int
       sortBy: UserfileSort
       orderBy: Order
@@ -43,22 +44,23 @@ const typeDefs = gql`
   }
 
   type UserfileFeed {
-    cursor: String!
+    cursor: Int!
     hasMore: Boolean!
     userfiles: [Userfile]!
+  }
+
+  enum ExtractMode {
+    collection
+    multiple
   }
 
   input UserfileInput {
     uploadFile: Upload
     dataProviderId: ID
-    userfile: GroupId
+    groupId: ID
     fileType: String
-    _doExtract: String
-    _upExMode: String
-  }
-
-  input GroupId {
-    groupId: ID!
+    extract: Boolean
+    extractMode: ExtractMode 
   }
 
   enum UserfileSort {
@@ -104,7 +106,22 @@ const resolvers = {
   },
   Mutation: {
     uploadUserfile: async (_, { input }, context) => {
-      return;
+      const { filename, mimetype, createReadStream } = await input.uploadFile;
+      const stream = createReadStream();
+
+      const formData = new FormData();
+      formData.append('upload_file', stream);
+      formData.append('data_provider_id', input.dataProviderId);
+      formData.append('userfile[group_id]', input.groupId);
+      formData.append('file_type', input.fileType);
+      if (input.extract) {
+        formData.append('_do_extract', 'on');
+      }
+      if (input.extractMode) {
+        formData.append('_up_ex_mode', input.extractMode);
+      }
+
+      return fetchCbrain(context, "userfiles", { method: "POST", body: formData  });
     }
   }
 };

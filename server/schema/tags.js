@@ -13,7 +13,7 @@ const typeDefs = gql`
   extend type Query {
     getTagById(id: ID!): Tag
     getTags(
-      cursor: String
+      cursor: Int
       limit: Int
       sortBy: TagSort
       orderBy: Order
@@ -41,7 +41,7 @@ const typeDefs = gql`
   }
 
   type TagFeed {
-    cursor: String!
+    cursor: Int!
     hasMore: Boolean!
     tags: [Tag]!
   }

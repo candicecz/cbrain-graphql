@@ -13,7 +13,7 @@ const typeDefs = gql`
   extend type Query {
     getDataProviderById(id: ID!): DataProvider
     getDataProviders(
-      cursor: String
+      cursor: Int
       limit: Int
       sortBy: DataProviderSort
       orderBy: Order
@@ -53,7 +53,7 @@ const typeDefs = gql`
   }
 
   type DataProviderFeed {
-    cursor: String!
+    cursor: Int!
     hasMore: Boolean!
     dataProviders: [DataProvider]!
   }

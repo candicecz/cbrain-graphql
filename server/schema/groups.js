@@ -13,7 +13,7 @@ const typeDefs = gql`
   extend type Query {
     getGroupById(id: ID!): Group
     getGroups(
-      cursor: String
+      cursor: Int
       limit: Int
       sortBy: GroupSort
       orderBy: Order
@@ -47,7 +47,7 @@ const typeDefs = gql`
   }
 
   type GroupFeed {
-    cursor: String!
+    cursor: Int!
     hasMore: Boolean!
     groups: [Group]!
   }

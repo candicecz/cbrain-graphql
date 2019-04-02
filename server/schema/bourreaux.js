@@ -9,7 +9,7 @@ const typeDefs = gql`
     getBourreauById(id: ID!): Bourreau
 
     getBourreaux(
-      cursor: String
+      cursor: Int
       limit: Int
       sortBy: BourreauSort
       orderBy: Order
@@ -27,7 +27,7 @@ const typeDefs = gql`
   }
 
   type BourreauFeed {
-    cursor: String!
+    cursor: Int!
     hasMore: Boolean!
     bourreaux: [Bourreau]
   }

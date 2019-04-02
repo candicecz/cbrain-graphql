@@ -12,7 +12,7 @@ const route = "tools";
 const typeDefs = gql`
   extend type Query {
     getTools(
-      cursor: String
+      cursor: Int 
       limit: Int
       sortBy: ToolSort
       orderBy: Order
@@ -32,7 +32,7 @@ const typeDefs = gql`
   }
 
   type ToolFeed {
-    cursor: String!
+    cursor: Int!
     hasMore: Boolean!
     tools: [Tool]!
   }

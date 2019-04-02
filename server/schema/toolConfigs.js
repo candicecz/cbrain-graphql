@@ -13,7 +13,7 @@ const typeDefs = gql`
   extend type Query {
     getToolConfigById(id: ID!): ToolConfig
     getToolConfigs(
-      cursor: String
+      cursor: Int
       limit: Int
       sortBy: ToolConfigSort
       orderBy: Order
@@ -31,7 +31,7 @@ const typeDefs = gql`
   }
 
   type ToolConfigFeed {
-    cursor: String!
+    cursor: Int!
     hasMore: Boolean!
     toolConfigs: [ToolConfig]!
   }

@@ -11,7 +11,7 @@ const route = "tasks";
 const typeDefs = gql`
   extend type Query {
     getTasks(
-      cursor: String
+      cursor: Int
       limit: Int
       sortBy: GroupSort
       orderBy: Order
@@ -64,7 +64,7 @@ const typeDefs = gql`
   }
 
   type TaskFeed {
-    cursor: String!
+    cursor: Int!
     hasMore: Boolean!
     tasks: [Task]!
   }

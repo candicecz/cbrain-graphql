@@ -20,7 +20,7 @@ const typeDefs = gql`
   extend type Query {
     getUserById(id: ID!): User
     getUsers(
-      cursor: String
+      cursor: Int
       limit: Int
       sortBy: UserSort
       orderBy: Order
@@ -94,7 +94,7 @@ const typeDefs = gql`
   }
 
   type UserFeed {
-    cursor: String!
+    cursor: Int!
     hasMore: Boolean!
     users: [User]!
   }

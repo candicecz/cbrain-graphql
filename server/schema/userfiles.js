@@ -11,21 +11,21 @@ const route = "userfiles";
 
 const typeDefs = gql`
   extend type Query {
-    getUserfileById(id: ID!): Userfiles
+    getUserfileById(id: ID!): Userfile
     getUserfiles(
       cursor: String
       limit: Int
-      sortBy: UserfilesSort
+      sortBy: UserfileSort
       orderBy: Order
-    ): UserfilesFeed!
+    ): UserfileFeed!
     getUserfileContent(id: ID!): String
   }
 
   extend type Mutation {
-    uploadUserfile(input: UserfileInput): Response
+    uploadUserfile(input: UserfileInput): Userfile
   }
 
-  type Userfiles {
+  type Userfile {
     id: ID
     name: String
     size: Int
@@ -42,14 +42,14 @@ const typeDefs = gql`
     description: String
   }
 
-  type UserfilesFeed {
+  type UserfileFeed {
     cursor: String!
     hasMore: Boolean!
-    userfiles: [Userfiles]!
+    userfiles: [Userfile]!
   }
 
   input UserfileInput {
-    uploadFile: String
+    uploadFile: Upload
     dataProviderId: ID
     userfile: GroupId
     fileType: String
@@ -61,7 +61,7 @@ const typeDefs = gql`
     groupId: ID!
   }
 
-  enum UserfilesSort {
+  enum UserfileSort {
     id
     name
     size
@@ -102,19 +102,9 @@ const resolvers = {
       return fetchCbrain(context, `${route}/${id}/content`).then(data => data);
     }
   },
-
   Mutation: {
-    uploadUserfile: (_, { input }, context) => {
-      console.log(input);
+    uploadUserfile: async (_, { input }, context) => {
       return;
-      //   return fetchCbrain(
-      //     context,
-      //     route,
-      //     { method: "POST", headers: {...headers,"content-type": "multipart/form-data"} },
-      //     { group: snakeKey(input) }
-      //   )
-      //     .then(data => data.json())
-      //     .then(group => camelKey(group));
     }
   }
 };

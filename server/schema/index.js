@@ -1,7 +1,7 @@
 const { gql } = require("apollo-server");
 const { makeExecutableSchema } = require("graphql-tools");
 const GraphQLJSON = require("graphql-type-json");
-const R = require("ramda");
+const { GraphQLUpload } = require("graphql-upload");
 const sessions = require("./sessions");
 const groups = require("./groups");
 const users = require("./users");
@@ -26,12 +26,20 @@ const typeDefs = gql`
     status: Int
     success: Boolean!
   }
+
   enum Order {
     ASC
     DESC
   }
+
   scalar JSON
+  scalar Upload
 `;
+
+const resolvers = {
+  JSON: GraphQLJSON,
+  Upload: GraphQLUpload
+};
 
 const schema = makeExecutableSchema({
   typeDefs: [
@@ -48,6 +56,7 @@ const schema = makeExecutableSchema({
     userfiles.typeDefs
   ],
   resolvers: [
+    resolvers,
     sessions.resolvers,
     groups.resolvers,
     users.resolvers,
@@ -57,8 +66,7 @@ const schema = makeExecutableSchema({
     dataProviders.resolvers,
     tasks.resolvers,
     tools.resolvers,
-    userfiles.resolvers,
-    { JSON: GraphQLJSON }
+    userfiles.resolvers
   ]
 });
 

@@ -12,7 +12,12 @@ const route = "data_providers";
 const typeDefs = gql`
   extend type Query {
     getDataProviderById(id: ID!): DataProvider
-    getDataProviders(pageSize: Int, after: String): DataProviderPagination!
+    getDataProviders(
+      cursor: String
+      limit: Int
+      sortBy: DataProviderSort
+      orderBy: Order
+    ): DataProviderFeed!
     browseDataProvider(id: ID!): [UserFile]
     isAliveDataProvider(id: ID!): Alive
   }
@@ -47,7 +52,7 @@ const typeDefs = gql`
     contentStorageShared: Boolean
   }
 
-  type DataProviderPagination {
+  type DataProviderFeed {
     cursor: String!
     hasMore: Boolean!
     dataProviders: [DataProvider]!
@@ -56,12 +61,24 @@ const typeDefs = gql`
   type Alive {
     isAlive: Boolean
   }
+  enum DataProviderSort {
+    id
+    name
+    type
+    userId
+    groupId
+    description
+  }
 `;
 
 const resolvers = {
   Query: {
-    getDataProviders: async (_, { pageSize, after }, context) => {
-      const results = await fetchCbrain(context, "${route}")
+    getDataProviders: async (
+      _,
+      { cursor, limit, sortBy, orderBy },
+      context
+    ) => {
+      const results = await fetchCbrain(context, `${route}`)
         .then(data => data.json())
         .then(dataProviders =>
           dataProviders.map(dataProvider => camelKey(dataProvider))

@@ -9,7 +9,6 @@ const server = new ApolloServer({
     const headers = {
       accept: "application/json",
       "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
-      "content-type": "application/x-www-form-urlencoded"
     };
     const user = req.headers.authorization
       ? await resolvers.Query.session(null, null, {

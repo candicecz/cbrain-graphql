@@ -1,6 +1,8 @@
 const { gql } = require("apollo-server");
 const FormData = require('form-data');
 const fetchCbrain = require("../cbrain-api");
+const { urlencodeFormData } = require("../utils");
+
 const {
   paginateResults,
   sortResults,
@@ -110,10 +112,12 @@ const resolvers = {
       const stream = createReadStream();
 
       const formData = new FormData();
-      formData.append('upload_file', stream);
+      formData.append('upload_file', stream, { filename });
       formData.append('data_provider_id', input.dataProviderId);
       formData.append('userfile[group_id]', input.groupId);
-      formData.append('file_type', input.fileType);
+      if (input.fileType) {
+        formData.append('file_type', input.fileType);
+      }
       if (input.extract) {
         formData.append('_do_extract', 'on');
       }
@@ -121,7 +125,10 @@ const resolvers = {
         formData.append('_up_ex_mode', input.extractMode);
       }
 
-      return fetchCbrain(context, "userfiles", { method: "POST", body: formData  });
+      return fetchCbrain(context, "userfiles", {
+        method: "POST",
+        body: formData
+      });
     }
   }
 };

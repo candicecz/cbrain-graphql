@@ -1,11 +1,14 @@
 const { ApolloServer } = require("apollo-server");
 const schema = require("./schema");
-// FIX: gotta be a better way to use the session query
+
+require("dotenv").config();
+
 const { resolvers } = require("./schema/sessions");
 
 const server = new ApolloServer({
   context: async ({ req }) => {
-    const baseURL = "http://localhost:3005/";
+    const baseURL = `${process.env.CBRAIN_ENDPOINT}/`;
+
     const headers = {
       accept: "application/json",
       "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",

@@ -1,6 +1,5 @@
 .vscode
 .DS_Store
-./server/notes
+server/notes
+server/.env
 server/node_modules
-client/node_modules
-server/datasources/

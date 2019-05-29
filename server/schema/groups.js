@@ -67,7 +67,6 @@ const resolvers = {
       const results = await fetchCbrain(context, route)
         .then(data => data.json())
         .then(groups => groups.map(group => camelKey(group)));
-
       return paginateResults({
         cursor,
         limit,

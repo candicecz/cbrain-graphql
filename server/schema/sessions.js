@@ -38,6 +38,7 @@ const resolvers = {
   },
   Mutation: {
     login: (_, { login, password }, context) => {
+      const { req } = context;
       const query = {
         login,
         password
@@ -45,6 +46,8 @@ const resolvers = {
       return fetchCbrain(context, "session", { method: "POST" }, query)
         .then(data => data.json())
         .then(session => {
+          req.session.token = session.cbrain_api_token;
+
           return {
             userId: session.user_id,
             token: session.cbrain_api_token

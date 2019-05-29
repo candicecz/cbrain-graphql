@@ -14,7 +14,11 @@ const fetchCbrain = async (
       query ? "?" + qs.stringify(query, { encodeValuesOnly: true }) : ""
     }`,
     {
-      headers: { ...context.headers, ...headers },
+      headers: {
+        ...context.headers,
+        ...headers,
+        authorization: `Bearer ${context.req.session.token}` || ""
+      },
       ...rest
     }
   );

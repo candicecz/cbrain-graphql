@@ -1,7 +1,8 @@
 const { gql } = require("apollo-server");
-const FormData = require('form-data');
+const FormData = require("form-data");
 const fetchCbrain = require("../cbrain-api");
 const { urlencodeFormData } = require("../utils");
+const R = require("ramda");
 
 const {
   paginateResults,
@@ -16,12 +17,19 @@ const typeDefs = gql`
   extend type Query {
     getUserfileById(id: ID!): Userfile
     getUserfiles(
-      cursor: Int 
+      cursor: Int
       limit: Int
       sortBy: UserfileSort
       orderBy: Order
     ): UserfileFeed!
     getUserfileContent(id: ID!): String
+    getUserfilesByGroupId(
+      id: ID!
+      cursor: Int
+      limit: Int
+      sortBy: UserfileSort
+      orderBy: Order
+    ): UserfileFeed!
   }
 
   extend type Mutation {
@@ -62,7 +70,7 @@ const typeDefs = gql`
     groupId: ID
     fileType: String
     extract: Boolean
-    extractMode: ExtractMode 
+    extractMode: ExtractMode
   }
 
   enum UserfileSort {
@@ -101,6 +109,26 @@ const resolvers = {
         .then(data => data.json())
         .then(userfile => camelKey(userfile));
     },
+    getUserfilesByGroupId: async (
+      _,
+      { id, cursor, limit, sortBy, orderBy },
+      context
+    ) => {
+      const results = await fetchCbrain(context, route)
+        .then(data => data.json())
+        .then(userfiles => userfiles.map(userfile => camelKey(userfile)));
+      const filteredResultsById = R.filter(
+        result => R.propEq("groupId", JSON.parse(id))(result),
+        results
+      );
+      console.log("filtred", filteredResultsById);
+      return paginateResults({
+        cursor,
+        limit,
+        results: sortResults({ sortBy, orderBy, results: filteredResultsById }),
+        route
+      });
+    },
     getUserfileContent: (_, { id }, context) => {
       // Note: Might need adjustments to work
       return fetchCbrain(context, `${route}/${id}/content`).then(data => data);
@@ -112,17 +140,17 @@ const resolvers = {
       const stream = createReadStream();
 
       const formData = new FormData();
-      formData.append('upload_file', stream, { filename });
-      formData.append('data_provider_id', input.dataProviderId);
-      formData.append('userfile[group_id]', input.groupId);
+      formData.append("upload_file", stream, { filename });
+      formData.append("data_provider_id", input.dataProviderId);
+      formData.append("userfile[group_id]", input.groupId);
       if (input.fileType) {
-        formData.append('file_type', input.fileType);
+        formData.append("file_type", input.fileType);
       }
       if (input.extract) {
-        formData.append('_do_extract', 'on');
+        formData.append("_do_extract", "on");
       }
       if (input.extractMode) {
-        formData.append('_up_ex_mode', input.extractMode);
+        formData.append("_up_ex_mode", input.extractMode);
       }
 
       return fetchCbrain(context, "userfiles", {

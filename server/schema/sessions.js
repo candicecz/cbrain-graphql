@@ -24,8 +24,7 @@ const resolvers = {
         .then(data => data.json())
         .then(session => {
           return {
-            userId: session.user_id,
-            token: session.cbrain_api_token
+            userId: session.user_id
           };
         })
         .catch(err => {
@@ -47,19 +46,22 @@ const resolvers = {
         .then(data => data.json())
         .then(session => {
           req.session.token = session.cbrain_api_token;
+          req.session.userId = session.user_id;
 
           return {
-            userId: session.user_id,
-            token: session.cbrain_api_token
+            userId: session.user_id
           };
         });
     },
     logout: (_, __, context) => {
+      const { res } = context;
+
       return fetchCbrain(context, "session", { method: "DELETE" })
-        .then(res => {
+        .then(session => {
+          res.clearCookie("uid", { path: "/" });
           return {
-            status: res.status,
-            success: res.status === 200
+            status: session.status,
+            success: session.status === 200
           };
         })
         .catch(err => err);

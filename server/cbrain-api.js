@@ -8,7 +8,6 @@ const fetchCbrain = async (
   query
 ) => {
   const { headers, ...rest } = fetchParams;
-
   let res = await fetch(
     `${context.baseURL}${route}${
       query ? "?" + qs.stringify(query, { encodeValuesOnly: true }) : ""
@@ -19,6 +18,7 @@ const fetchCbrain = async (
         ...headers,
         authorization: `Bearer ${context.req.session.token}` || ""
       },
+
       ...rest
     }
   );

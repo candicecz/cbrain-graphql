@@ -1,7 +1,7 @@
 const R = require("ramda");
 const changeCase = require("change-case");
 
-const paginateResults = ({ cursor, limit = 10, results, route }) => {
+const paginateResults = ({ cursor, limit = 50, results, route }) => {
   if (!results.length || limit < 1)
     return { [`${route}`]: results, cursor: 0, hasMore: false };
   if (!cursor) {

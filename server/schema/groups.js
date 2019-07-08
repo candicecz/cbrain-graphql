@@ -56,8 +56,10 @@ const typeDefs = gql`
     id
     name
     description
-    creator
+    creatorId
     siteId
+    type
+    invisible
   }
 `;
 

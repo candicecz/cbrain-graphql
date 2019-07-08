@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const { ApolloServer } = require("apollo-server-express");
 const session = require("express-session");
+const serveStatic = require("serve-static");
 const schema = require("./schema");
 const { resolvers } = require("./schema/sessions");
 
@@ -22,8 +23,8 @@ app.use(
     saveUninitialized: false,
     httpOnly: true,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 1000 * 60 * 60
+      secure: process.env.NODE_ENV === "production"
+      // maxAge: 1000 * 60 * 60 * 24
     }
   })
 );
@@ -31,13 +32,19 @@ app.use(
 app.use(bodyParser.json());
 
 const graphqlServer = new ApolloServer({
-  context: ({ req }) => {
+  context: ({ req, res }) => {
     const baseURL = `${process.env.CBRAIN_ENDPOINT}/`;
     const headers = {
       accept: "application/json",
       "accept-language": "en-GB,en-US;q=0.9,en;q=0.8"
     };
-    return { req, baseURL, headers };
+    return {
+      req,
+      res,
+      baseURL,
+      headers,
+      user: { userId: req.session.userId }
+    };
   },
   schema
 });

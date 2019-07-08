@@ -121,7 +121,6 @@ const resolvers = {
         result => R.propEq("groupId", JSON.parse(id))(result),
         results
       );
-      console.log("filtred", filteredResultsById);
       return paginateResults({
         cursor,
         limit,

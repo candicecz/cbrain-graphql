@@ -27,7 +27,6 @@ const typeDefs = gql`
   }
 
   input GroupInput {
-    id: ID
     name: String!
     description: String
     type: String

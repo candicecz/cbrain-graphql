@@ -31,7 +31,6 @@ const typeDefs = gql`
     description: String
     type: String
     siteId: ID
-    creatorId: Int
     invisible: Boolean
   }
 

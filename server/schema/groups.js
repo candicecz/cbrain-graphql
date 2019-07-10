@@ -29,7 +29,6 @@ const typeDefs = gql`
   input GroupInput {
     name: String!
     description: String
-    type: String
     siteId: ID
     invisible: Boolean
   }

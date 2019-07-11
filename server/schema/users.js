@@ -136,7 +136,6 @@ const resolvers = {
   },
   Mutation: {
     createUser: (_, { input }, context) => {
-      // TO DO: @candicecz Doesn't work - need to fix.
       const { user, ...rest } = snakeKey(input);
       return fetchCbrain(
         context,

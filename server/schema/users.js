@@ -40,7 +40,6 @@ const typeDefs = gql`
   }
 
   input UserInfo {
-    id: ID
     login: String!
     password: String!
     passwordConfirmation: String!
@@ -49,9 +48,8 @@ const typeDefs = gql`
     city: String
     country: String
     timeZone: String
-    type: String!
+    type: UserType!
     siteId: Int
-    lastConnectedAt: String
     accountLocked: String
   }
 
@@ -62,7 +60,6 @@ const typeDefs = gql`
   }
 
   input UpdateUserInfo {
-    id: ID
     login: String
     password: String
     passwordConfirmation: String
@@ -71,9 +68,8 @@ const typeDefs = gql`
     city: String
     country: String
     timeZone: String
-    type: String
+    type: UserType!
     siteId: Int
-    lastConnectedAt: String
     accountLocked: String
   }
 
@@ -97,6 +93,12 @@ const typeDefs = gql`
     cursor: Int!
     hasMore: Boolean!
     users: [User]!
+  }
+
+  enum UserType {
+    NormalUser
+    SiteManager
+    AdminUser
   }
 
   enum UserSort {

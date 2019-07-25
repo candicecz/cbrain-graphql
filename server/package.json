@@ -16,10 +16,12 @@
     "graphql-tools": "^4.0.4",
     "graphql-type-json": "^0.2.4",
     "graphql-upload": "^8.0.4",
+    "mkdirp": "^0.5.1",
     "node-fetch": "^2.3.0",
     "nodemon": "^1.18.10",
     "qs": "^6.6.0",
-    "ramda": "^0.26.1"
+    "ramda": "^0.26.1",
+    "shortid": "^2.2.14"
   },
   "license": "MIT",
   "main": "index.js",

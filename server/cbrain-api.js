@@ -8,6 +8,7 @@ const fetchCbrain = async (
   query
 ) => {
   const { headers, ...rest } = fetchParams;
+
   let res = await fetch(
     `${context.baseURL}${route}${
       query ? "?" + qs.stringify(query, { encodeValuesOnly: true }) : ""
@@ -15,15 +16,13 @@ const fetchCbrain = async (
     {
       headers: {
         ...context.headers,
-        ...headers,
-        authorization: `Bearer ${context.req.session.token}` || ""
+        ...headers
       },
-
       ...rest
     }
   );
   if (res.status !== 200 && res.status !== 201) {
-    throw new Error(`Fetch Failed - ${res.status} ${res.statusText}`);
+    throw new Error("Fetch Failed");
   }
   return res;
 };

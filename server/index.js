@@ -1,19 +1,56 @@
 const express = require("express");
+const session = require("express-session");
 const bodyParser = require("body-parser");
 const { ApolloServer } = require("apollo-server-express");
-const session = require("express-session");
-const serveStatic = require("serve-static");
 const schema = require("./schema");
-const { resolvers } = require("./schema/sessions");
 
 require("dotenv").config();
 
-const app = express();
-
+const { resolvers } = require("./schema/sessions");
 const cors = {
-  origin: "http://localhost:3000",
+  origin:
+    process.env.NODE_ENV === "production"
+      ? "*"
+      : `${process.env.CLIENT_ENDPOINT}`,
   credentials: true
 };
+
+const BASE_HEADERS = {
+  accept: "application/json",
+  "accept-language": "en-GB,en-US;q=0.9,en;q=0.8"
+};
+
+const BASE_URL = `${process.env.CBRAIN_ENDPOINT}/`;
+
+const server = new ApolloServer({
+  context: ({ req, res }) => {
+    const token = req.session.token || null;
+
+    return {
+      req,
+      res,
+      baseURL: BASE_URL,
+      headers: {
+        ...BASE_HEADERS,
+        authorization: token ? `Bearer ${token}` : null,
+        token: token || null
+      }
+      // user: { userId: req.session.userId }
+    };
+  },
+  schema
+});
+
+const app = express();
+
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
 
 app.use(
   session({
@@ -28,28 +65,10 @@ app.use(
     }
   })
 );
-
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const graphqlServer = new ApolloServer({
-  context: ({ req, res }) => {
-    const baseURL = `${process.env.CBRAIN_ENDPOINT}/`;
-    const headers = {
-      accept: "application/json",
-      "accept-language": "en-GB,en-US;q=0.9,en;q=0.8"
-    };
-    return {
-      req,
-      res,
-      baseURL,
-      headers,
-      user: { userId: req.session.userId }
-    };
-  },
-  schema
-});
-
-graphqlServer.applyMiddleware({ app, cors });
+server.applyMiddleware({ app, cors });
 
 app.listen(process.env.PORT, () => {
   console.log(`🚀 Server ready on port ${process.env.PORT}`); // eslint-disable-line no-console

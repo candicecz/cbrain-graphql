@@ -76,8 +76,6 @@ const typeDefs = gql`
   type User {
     id: ID
     login: String
-    password: String
-    passwordConfirmation: String
     fullName: String
     email: String
     city: String

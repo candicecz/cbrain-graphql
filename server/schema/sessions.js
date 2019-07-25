@@ -47,7 +47,6 @@ const resolvers = {
         .then(session => {
           req.session.token = session.cbrain_api_token;
           req.session.userId = session.user_id;
-
           return {
             userId: session.user_id
           };

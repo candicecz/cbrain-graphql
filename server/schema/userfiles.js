@@ -1,7 +1,9 @@
 const { gql } = require("apollo-server");
 const FormData = require("form-data");
 const fetchCbrain = require("../cbrain-api");
-const { urlencodeFormData } = require("../utils");
+const fs = require("fs");
+const mkdirp = require("mkdirp");
+const shortid = require("shortid");
 const R = require("ramda");
 
 const {
@@ -33,7 +35,7 @@ const typeDefs = gql`
   }
 
   extend type Mutation {
-    uploadUserfile(input: UserfileInput): Userfile
+    singleUpload(input: UserfileInput): Response
   }
 
   type Userfile {
@@ -65,11 +67,11 @@ const typeDefs = gql`
   }
 
   input UserfileInput {
-    uploadFile: Upload
+    file: Upload!
     dataProviderId: ID
     groupId: ID
-    fileType: String
     extract: Boolean
+    fileType: String
     extractMode: ExtractMode
   }
 
@@ -90,6 +92,46 @@ const typeDefs = gql`
     description
   }
 `;
+
+const UPLOAD_DIR = "./uploads";
+
+// Ensure upload directory exists.
+mkdirp.sync(UPLOAD_DIR);
+
+// Temporarily store file in upload directory.
+const storeFS = ({ stream, filename }) => {
+  const id = shortid.generate();
+  const path = `${UPLOAD_DIR}/${id}-${filename}`;
+  return new Promise((resolve, reject) =>
+    stream
+      .on("error", error => {
+        if (stream.truncated)
+          // Delete the truncated file.
+          fs.unlinkSync(path);
+        reject(error);
+      })
+      .pipe(fs.createWriteStream(path))
+      .on("error", error => reject(error))
+      .on("finish", () => resolve({ id, path }))
+  );
+};
+
+const deleteTmpUpload = path => {
+  fs.unlink(
+    path,
+    err => err && console.log("Failed to delete temporary file", err)
+  );
+};
+
+const processUpload = async upload => {
+  const { createReadStream, filename, mimetype } = await upload;
+  if (!createReadStream) {
+    return;
+  }
+  const stream = createReadStream();
+  const { id, path } = await storeFS({ stream, filename });
+  return { tmpPath: path, filename };
+};
 
 const resolvers = {
   Query: {
@@ -134,9 +176,9 @@ const resolvers = {
     }
   },
   Mutation: {
-    uploadUserfile: async (_, { input }, context) => {
-      const { filename, mimetype, createReadStream } = await input.uploadFile;
-      const stream = createReadStream();
+    singleUpload: async (_, { input }, context) => {
+      const { tmpPath, filename } = await processUpload(input.file);
+      const stream = fs.createReadStream(tmpPath);
 
       const formData = new FormData();
       formData.append("upload_file", stream, { filename });
@@ -146,16 +188,27 @@ const resolvers = {
         formData.append("file_type", input.fileType);
       }
       if (input.extract) {
-        formData.append("_do_extract", "on");
+        formData.append("_do_extract", input.extract);
       }
       if (input.extractMode) {
         formData.append("_up_ex_mode", input.extractMode);
       }
 
-      return fetchCbrain(context, "userfiles", {
+      await fetchCbrain(context, "userfiles", {
         method: "POST",
         body: formData
-      });
+      })
+        .then(data => {
+          deleteTmpUpload(tmpPath);
+          return {
+            status: data.status,
+            success: data.status === 200 || data.status === 201
+          };
+        })
+        .catch(err => {
+          deleteTmpUpload(tmpPath);
+          return;
+        });
     }
   }
 };

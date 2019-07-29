@@ -165,14 +165,18 @@ const resolvers = {
             size: formatBytes(+userfile.size)
           }))
         );
-      const filteredResultsById = R.filter(
+      const filteredResultsByGroup = R.filter(
         result => R.propEq("groupId", JSON.parse(id))(result),
         results
       );
       return paginateResults({
         cursor,
         limit,
-        results: sortResults({ sortBy, orderBy, results: filteredResultsById }),
+        results: sortResults({
+          sortBy,
+          orderBy,
+          results: filteredResultsByGroup
+        }),
         route
       });
     },

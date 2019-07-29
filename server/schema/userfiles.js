@@ -37,6 +37,7 @@ const typeDefs = gql`
 
   extend type Mutation {
     singleUpload(input: UserfileInput): Response
+    deleteUserfiles(ids: [ID!]!): Response
   }
 
   type Userfile {
@@ -219,6 +220,23 @@ const resolvers = {
           deleteTmpUpload(tmpPath);
           return;
         });
+    },
+    deleteUserfiles: async (_, { ids }, context) => {
+      await fetchCbrain(
+        context,
+        "userfiles/delete_files",
+        {
+          method: "DELETE"
+        },
+        {
+          "file_ids[]": ids
+        }
+      ).then(data => {
+        return {
+          status: data.status,
+          success: data.status === 200 || data.status === 201
+        };
+      });
     }
   }
 };

@@ -11,7 +11,7 @@ const fetchCbrain = async (
 
   let res = await fetch(
     `${context.baseURL}${route}${
-      query ? "?" + qs.stringify(query, { encodeValuesOnly: true }) : ""
+      query ? "?" + qs.stringify(query, { encode: false, indices: false }) : ""
     }`,
     {
       headers: {

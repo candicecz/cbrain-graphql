@@ -10,7 +10,8 @@ const {
   paginateResults,
   sortResults,
   snakeKey,
-  camelKey
+  camelKey,
+  formatBytes
 } = require("../utils");
 
 const route = "userfiles";
@@ -41,7 +42,7 @@ const typeDefs = gql`
   type Userfile {
     id: ID
     name: String
-    size: Int
+    size: String
     userId: ID
     parentId: ID
     type: String
@@ -158,7 +159,12 @@ const resolvers = {
     ) => {
       const results = await fetchCbrain(context, route)
         .then(data => data.json())
-        .then(userfiles => userfiles.map(userfile => camelKey(userfile)));
+        .then(userfiles =>
+          userfiles.map(userfile => ({
+            ...camelKey(userfile),
+            size: formatBytes(+userfile.size)
+          }))
+        );
       const filteredResultsById = R.filter(
         result => R.propEq("groupId", JSON.parse(id))(result),
         results

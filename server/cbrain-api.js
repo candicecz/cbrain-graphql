@@ -32,7 +32,7 @@ const fetchCbrain = async (
     }
     return res;
   } catch (err) {
-    return err;
+    throw new Error(`${err.status} - ${err.statusText}`);
   }
 };
 

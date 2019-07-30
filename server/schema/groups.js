@@ -20,7 +20,7 @@ const typeDefs = gql`
       sortBy: GroupSort
       orderBy: Order
     ): GroupFeed!
-    getGroupHeadings: [Heading!]!
+    groupTableHeaders: [Heading!]!
   }
 
   extend type Mutation {
@@ -116,7 +116,7 @@ const resolvers = {
         .then(data => data.json())
         .then(group => camelKey(group));
     },
-    getGroupHeadings: () => {
+    groupTableHeaders: () => {
       return [
         { header: "name", accessor: "name" },
         { header: "type", accessor: "type" },

@@ -51,6 +51,7 @@ const typeDefs = gql`
     invisible: Boolean
     files: Int
     tasks: Int
+    users: Int
   }
 
   type GroupFeed {
@@ -93,10 +94,12 @@ const resolvers = {
             return {
               ...camelKey(group),
               files: numOfFiles.userfiles.length,
-              tasks: numOfTasks.tasks.length
+              tasks: numOfTasks.tasks.length,
+              users: 0
             };
           })
         );
+
       return await paginateResults({
         cursor,
         limit,

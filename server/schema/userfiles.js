@@ -38,6 +38,7 @@ const typeDefs = gql`
   extend type Mutation {
     singleUpload(input: UserfileInput): Response
     deleteUserfiles(ids: [ID!]!): Response
+    updateUserfile(id: ID!, input: UpdateUserfileInput): Response
   }
 
   type Userfile {
@@ -92,6 +93,18 @@ const typeDefs = gql`
     immutable
     archived
     description
+  }
+
+  input UpdateUserfileInput {
+    name: String
+    description: String
+    groupId: ID
+    type: String
+    archived: Boolean
+    hidden: Boolean
+    immutable: Boolean
+    groupWritable: Boolean
+    userId: ID
   }
 `;
 
@@ -205,7 +218,7 @@ const resolvers = {
         formData.append("_up_ex_mode", input.extractMode);
       }
 
-      await fetchCbrain(context, "userfiles", {
+      await fetchCbrain(context, route, {
         method: "POST",
         body: formData
       })
@@ -221,10 +234,28 @@ const resolvers = {
           return;
         });
     },
+    updateUserfile: async (_, { id, input }, context) => {
+      return fetchCbrain(
+        context,
+        `${route}/${id}`,
+        { method: "PUT" },
+        { userfile: snakeKey({ ...input }) }
+      ).then(res => {
+        if (res.success === false) {
+          return res;
+        }
+
+        return {
+          status: res.status,
+          success: res.status === 200,
+          message: res.statusText
+        };
+      });
+    },
     deleteUserfiles: async (_, { ids }, context) => {
       await fetchCbrain(
         context,
-        "userfiles/delete_files",
+        `${route}/delete_files`,
         {
           method: "DELETE"
         },

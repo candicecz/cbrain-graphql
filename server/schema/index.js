@@ -23,8 +23,9 @@ const typeDefs = gql`
   }
 
   type Response {
-    status: Int
     success: Boolean!
+    status: Int
+    message: String
   }
 
   enum Order {

@@ -68,13 +68,16 @@ const typeDefs = gql`
     siteId
     type
     invisible
+    files
+    users
+    tasks
   }
 `;
 
 const resolvers = {
   Query: {
     getGroups: async (_, { cursor, limit, sortBy, orderBy }, context) => {
-      const results = await fetchCbrain(context, route)
+      const data = await fetchCbrain(context, route)
         .then(data => data.json())
         .then(groups =>
           groups.map(async group => {
@@ -99,6 +102,7 @@ const resolvers = {
             };
           })
         );
+      const results = await Promise.all(data);
 
       return await paginateResults({
         cursor,
@@ -106,7 +110,7 @@ const resolvers = {
         results: sortResults({
           sortBy,
           orderBy,
-          results: await Promise.all(results)
+          results
         }),
         route
       });

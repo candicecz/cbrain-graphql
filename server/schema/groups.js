@@ -1,5 +1,7 @@
 const { gql } = require("apollo-server");
 const fetchCbrain = require("../cbrain-api");
+const userfiles = require("./userfiles");
+const tasks = require("./tasks");
 const {
   paginateResults,
   sortResults,
@@ -18,12 +20,18 @@ const typeDefs = gql`
       sortBy: GroupSort
       orderBy: Order
     ): GroupFeed!
+    getGroupHeadings: [Heading!]!
   }
 
   extend type Mutation {
     createGroup(input: GroupInput): Group
     deleteGroup(id: ID!): Response
     updateGroup(id: ID!, input: GroupInput): Response
+  }
+
+  type Heading {
+    header: String!
+    accessor: String!
   }
 
   input GroupInput {
@@ -41,6 +49,8 @@ const typeDefs = gql`
     siteId: ID
     creatorId: Int
     invisible: Boolean
+    files: Int
+    tasks: Int
   }
 
   type GroupFeed {
@@ -65,11 +75,36 @@ const resolvers = {
     getGroups: async (_, { cursor, limit, sortBy, orderBy }, context) => {
       const results = await fetchCbrain(context, route)
         .then(data => data.json())
-        .then(groups => groups.map(group => camelKey(group)));
-      return paginateResults({
+        .then(groups =>
+          groups.map(async group => {
+            /*
+            NOTE: Patch for api - needs to be fixed later.
+            */
+            const numOfFiles = await userfiles.resolvers.Query.getUserfilesByGroupId(
+              null,
+              { id: group.id },
+              context
+            );
+            const numOfTasks = await tasks.resolvers.Query.getTasksByGroupId(
+              null,
+              { id: group.id },
+              context
+            );
+            return {
+              ...camelKey(group),
+              files: numOfFiles.userfiles.length,
+              tasks: numOfTasks.tasks.length
+            };
+          })
+        );
+      return await paginateResults({
         cursor,
         limit,
-        results: sortResults({ sortBy, orderBy, results }),
+        results: sortResults({
+          sortBy,
+          orderBy,
+          results: await Promise.all(results)
+        }),
         route
       });
     },
@@ -77,6 +112,17 @@ const resolvers = {
       return fetchCbrain(context, `${route}/${id}`)
         .then(data => data.json())
         .then(group => camelKey(group));
+    },
+    getGroupHeadings: () => {
+      return [
+        { header: "name", accessor: "name" },
+        { header: "type", accessor: "type" },
+        { header: "site", accessor: "siteId" },
+        { header: "creator", accessor: "creatorId" },
+        { header: "users", accessor: "users" },
+        { header: "files", accessor: "files" },
+        { header: "tasks", accessor: "tasks" }
+      ];
     }
   },
 

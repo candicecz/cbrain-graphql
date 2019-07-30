@@ -27,7 +27,7 @@ const fetchCbrain = async (
       throw {
         status: res.status,
         success: res.status === 200 && res.status === 201,
-        message: res.statusText
+        statusText: res.statusText
       };
     }
     return res;

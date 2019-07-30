@@ -241,10 +241,6 @@ const resolvers = {
         { method: "PUT" },
         { userfile: snakeKey({ ...input }) }
       ).then(res => {
-        if (res.success === false) {
-          return res;
-        }
-
         return {
           status: res.status,
           success: res.status === 200,

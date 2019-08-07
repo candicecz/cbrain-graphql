@@ -34,8 +34,8 @@ const server = new ApolloServer({
         ...BASE_HEADERS,
         authorization: token ? `Bearer ${token}` : null,
         token: token || null
-      }
-      // user: { userId: req.session.userId }
+      },
+      user: { userId: req.session.userId }
     };
   },
   schema

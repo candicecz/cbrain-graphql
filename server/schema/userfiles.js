@@ -18,6 +18,7 @@ const route = "userfiles";
 
 const typeDefs = gql`
   extend type Query {
+    userfilesTableHeaders: [Heading!]!
     getUserfileById(id: ID!): Userfile
     getUserfiles(
       cursor: Int
@@ -197,6 +198,15 @@ const resolvers = {
     getUserfileContent: (_, { id }, context) => {
       // Note: Might need adjustments to work
       return fetchCbrain(context, `${route}/${id}/content`).then(data => data);
+    },
+    userfilesTableHeaders: () => {
+      return [
+        { header: "name", accessor: "name" },
+        { header: "type", accessor: "type" },
+        { header: "creator", accessor: "creatorId" },
+        { header: "read/write", accessor: "groupWritable" },
+        { header: "size", accessor: "size" }
+      ];
     }
   },
   Mutation: {

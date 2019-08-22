@@ -27,12 +27,7 @@ const resolvers = {
             userId: session.user_id
           };
         })
-        .catch(err => {
-          if (!context.headers.authorization) {
-            return { message: "Must be logged in" };
-          }
-          return { message: err };
-        });
+        .catch(err => err);
     }
   },
   Mutation: {
@@ -50,14 +45,15 @@ const resolvers = {
           return {
             userId: session.user_id
           };
-        });
+        })
+        .catch(err => err);
     },
     logout: (_, __, context) => {
       const { res } = context;
 
       return fetchCbrain(context, "session", { method: "DELETE" })
         .then(session => {
-          res.clearCookie("uid", { path: "/" });
+          res.clearCookie("sid", { path: "/" });
           return {
             status: session.status,
             success: session.status === 200

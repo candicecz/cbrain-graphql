@@ -54,14 +54,14 @@ app.use(function(req, res, next) {
 
 app.use(
   session({
-    name: "uid",
+    name: "sid",
     secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false,
     httpOnly: true,
     cookie: {
-      secure: process.env.NODE_ENV === "production"
-      // maxAge: 1000 * 60 * 60 * 24
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 1000 * 60 * 60 * 24
     }
   })
 );

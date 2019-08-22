@@ -1,5 +1,6 @@
 const qs = require("qs");
 const fetch = require("node-fetch");
+const { AuthenticationError } = require("apollo-server-express");
 
 const fetchCbrain = async (
   context,
@@ -23,15 +24,15 @@ const fetchCbrain = async (
         ...rest
       }
     );
+
     if (res.status !== 200 && res.status !== 201) {
-      throw {
-        status: res.status,
-        success: res.status === 200 && res.status === 201,
-        statusText: res.statusText
-      };
+      throw res;
     }
     return res;
   } catch (err) {
+    if (err.status === 401) {
+      throw new AuthenticationError(`${err.statusText}`);
+    }
     throw new Error(`${err.status} - ${err.statusText}`);
   }
 };

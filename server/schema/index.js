@@ -10,6 +10,7 @@ const tags = require("./tags");
 const bourreaux = require("./bourreaux");
 const dataProviders = require("./dataProviders");
 const tasks = require("./tasks");
+const taskParameters = require("./taskParameters");
 const tools = require("./tools");
 const userfiles = require("./userfiles");
 
@@ -53,6 +54,7 @@ const schema = makeExecutableSchema({
     bourreaux.typeDefs,
     dataProviders.typeDefs,
     tasks.typeDefs,
+    taskParameters.typeDefs,
     tools.typeDefs,
     userfiles.typeDefs
   ],
@@ -66,6 +68,7 @@ const schema = makeExecutableSchema({
     bourreaux.resolvers,
     dataProviders.resolvers,
     tasks.resolvers,
+    taskParameters.resolvers,
     tools.resolvers,
     userfiles.resolvers
   ]

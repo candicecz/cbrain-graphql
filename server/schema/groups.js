@@ -1,7 +1,5 @@
 const { gql } = require("apollo-server");
 const fetchCbrain = require("../cbrain-api");
-const userfiles = require("./userfiles");
-const tasks = require("./tasks");
 const {
   paginateResults,
   sortResults,
@@ -74,37 +72,29 @@ const typeDefs = gql`
   }
 `;
 
+const transformGroup = async (group, context) => {
+  if (context.loaders === undefined) {
+    return camelKey(group);
+  }
+  const u = await context.loaders.userfilesByGroupIds.load(group.id);
+  const t = await context.loaders.tasksByGroupIds.load(group.id);
+  return {
+    ...camelKey(group),
+    files: u.userfiles.length,
+    tasks: t.tasks.length,
+    users: 0
+  };
+};
+
 const resolvers = {
   Query: {
     getGroups: async (_, { cursor, limit, sortBy, orderBy }, context) => {
       const data = await fetchCbrain(context, route)
         .then(data => data.json())
-        .then(groups =>
-          groups.map(async group => {
-            /*
-            NOTE: Patch for api - needs to be fixed later.
-            */
-            const numOfFiles = await userfiles.resolvers.Query.getUserfilesByGroupId(
-              null,
-              { id: group.id },
-              context
-            );
-            const numOfTasks = await tasks.resolvers.Query.getTasksByGroupId(
-              null,
-              { id: group.id },
-              context
-            );
-            return {
-              ...camelKey(group),
-              files: numOfFiles.userfiles.length,
-              tasks: numOfTasks.tasks.length,
-              users: 0
-            };
-          })
-        );
+        .then(groups => groups.map(group => transformGroup(group, context)));
       const results = await Promise.all(data);
 
-      return await paginateResults({
+      return paginateResults({
         cursor,
         limit,
         results: sortResults({
@@ -118,7 +108,7 @@ const resolvers = {
     getGroupById: (_, { id }, context) => {
       return fetchCbrain(context, `${route}/${id}`)
         .then(data => data.json())
-        .then(group => camelKey(group));
+        .then(group => transformGroup(group, context));
     },
     groupTableHeaders: () => {
       return [

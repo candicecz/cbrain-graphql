@@ -13,7 +13,12 @@ const fetchCbrain = async (
     let res = await fetch(
       `${context.baseURL}${route}${
         query
-          ? "?" + qs.stringify(query, { encode: false, indices: false })
+          ? "?" +
+            qs.stringify(query, {
+              encode: false,
+              indices: false,
+              arrayFormat: "brackets"
+            })
           : ""
       }`,
       {

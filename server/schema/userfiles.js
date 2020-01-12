@@ -5,7 +5,6 @@ const fs = require("fs");
 const mkdirp = require("mkdirp");
 const shortid = require("shortid");
 const R = require("ramda");
-
 const {
   paginateResults,
   sortResults,
@@ -57,6 +56,9 @@ const typeDefs = gql`
     immutable: String
     archived: String
     description: String
+    user: User
+    group: Group
+    dataProvider: DataProvider
   }
 
   type UserfileFeed {
@@ -149,12 +151,36 @@ const processUpload = async upload => {
   return { tmpPath: path, filename };
 };
 
+const transformUserfiles = async (userfile, context) => {
+  if (context.loaders === undefined) {
+    return camelKey(userfile);
+  }
+  const { user_id, group_id, data_provider_id, ...rest } = await userfile;
+  const user = await context.loaders.user.load(user_id);
+  const group = await context.loaders.group.load(group_id);
+  const dataProvider = await context.loaders.dataProvider.load(
+    data_provider_id
+  );
+  const { size } = userfile;
+
+  return camelKey({
+    ...userfile,
+    size: formatBytes(+size),
+    user,
+    group,
+    dataProvider
+  });
+};
+
 const resolvers = {
   Query: {
     getUserfiles: async (_, { cursor, limit, sortBy, orderBy }, context) => {
-      const results = await fetchCbrain(context, route)
+      const data = await fetchCbrain(context, route)
         .then(data => data.json())
-        .then(userfiles => userfiles.map(userfile => camelKey(userfile)));
+        .then(userfiles =>
+          userfiles.map(async userfile => transformUserfiles(userfile, context))
+        );
+      const results = await Promise.all(data);
       return paginateResults({
         cursor,
         limit,
@@ -165,32 +191,32 @@ const resolvers = {
     getUserfileById: (_, { id }, context) => {
       return fetchCbrain(context, `${route}/${id}`)
         .then(data => data.json())
-        .then(userfile => camelKey(userfile));
+        .then(async userfile => transformUserfiles(userfile, context));
     },
     getUserfilesByGroupId: async (
       _,
       { id, cursor, limit, sortBy, orderBy },
       context
     ) => {
-      const results = await fetchCbrain(context, route)
+      const data = await fetchCbrain(context, route)
         .then(data => data.json())
         .then(userfiles =>
-          userfiles.map(userfile => ({
-            ...camelKey(userfile),
-            size: formatBytes(+userfile.size)
-          }))
+          userfiles.map(async userfile => transformUserfiles(userfile, context))
         );
-      const filteredResultsByGroup = R.filter(
-        result => R.propEq("groupId", JSON.parse(id))(result),
-        results
-      );
+      const results = await Promise.all(data);
+
       return paginateResults({
         cursor,
         limit,
         results: sortResults({
           sortBy,
           orderBy,
-          results: filteredResultsByGroup
+          results: R.filter(r => {
+            return (
+              (r.groupId && +r.groupId) === +id ||
+              (r.group && +r.group.id) === +id
+            );
+          }, results)
         }),
         route
       });
@@ -203,9 +229,11 @@ const resolvers = {
       return [
         { header: "name", accessor: "name" },
         { header: "type", accessor: "type" },
-        { header: "creator", accessor: "creatorId" },
+        { header: "creator", accessor: "userId" },
+        { header: "group", accessor: "groupId" },
         { header: "read/write", accessor: "groupWritable" },
-        { header: "size", accessor: "size" }
+        { header: "size", accessor: "size" },
+        { header: "data provider", accessor: "dataProviderId" }
       ];
     }
   },

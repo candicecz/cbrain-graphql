@@ -93,7 +93,9 @@ const resolvers = {
     getDataProviderById: (_, { id }, context) => {
       return fetchCbrain(context, `${route}/`, { method: "GET" }, { id })
         .then(data => data.json())
-        .then(dataProvider => camelKey(dataProvider[0]));
+        .then(dataProvider => {
+          return camelKey(dataProvider[0]);
+        });
     },
     browseDataProvider: (_, { id }, context) => {
       return fetchCbrain(context, `${route}/${id}/browse`)

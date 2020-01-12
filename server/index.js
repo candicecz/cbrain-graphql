@@ -3,10 +3,10 @@ const session = require("express-session");
 const bodyParser = require("body-parser");
 const { ApolloServer } = require("apollo-server-express");
 const schema = require("./schema");
+const { createLoaders } = require("./schema/loaders");
 
 require("dotenv").config();
 
-const { resolvers } = require("./schema/sessions");
 const cors = {
   origin:
     process.env.NODE_ENV === "production"
@@ -25,8 +25,7 @@ const BASE_URL = `${process.env.CBRAIN_ENDPOINT}/`;
 const server = new ApolloServer({
   context: ({ req, res }) => {
     const token = req.session.token || null;
-
-    return {
+    const context = {
       req,
       res,
       baseURL: BASE_URL,
@@ -37,6 +36,7 @@ const server = new ApolloServer({
       },
       user: { userId: req.session.userId }
     };
+    return { ...context, loaders: createLoaders(context) };
   },
   schema
 });

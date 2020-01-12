@@ -1,0 +1,308 @@
+{
+  "id": 18,
+  "title": "Diagnostics",
+  "description": "A scientific tool.",
+  "type": "object",
+  "required": [],
+  "properties": {
+    "bourreauLifeCycle": {
+      "title": "Bourreau Life Cycle, Recovery and Restarting Capabilities",
+      "type": "object",
+      "properties": {
+        "table": {
+          "type": "array",
+          "headers": [
+            { "type": "string", "title": "" },
+            { "type": "string", "title": "Normal Cycle" },
+            { "type": "string", "title": "Error Recovery" },
+            { "type": "string", "title": "Restart Capabilities" }
+          ],
+          "rows": [
+            [
+              { "title": "Setup" },
+              {
+                "type": "object",
+                "properties": {
+                  "setup_crash": {
+                    "property": "setup_crash",
+                    "type": "boolean",
+                    "title": "Crash?",
+                    "default": false
+                  },
+                  "setup_delay": {
+                    "property": "setup_delay",
+                    "type": "number",
+                    "title": "Delay",
+                    "default": "0"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "recover_setup": {
+                    "property": "recover_setup",
+                    "type": "boolean",
+                    "title": "Enable?",
+                    "default": true
+                  },
+                  "recover_setup_delay": {
+                    "property": "recover_setup_delay",
+                    "type": "number",
+                    "title": "Delay",
+                    "default": "0"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "restart_setup": {
+                    "property": "restart_setup",
+                    "type": "boolean",
+                    "title": "Enable?",
+                    "default": true
+                  },
+                  "restart_setup_delay": {
+                    "property": "restart_setup_delay",
+                    "type": "number",
+                    "title": "Delay",
+                    "default": "0"
+                  }
+                }
+              }
+            ],
+            [
+              { "title": "Cluster" },
+              {
+                "type": "object",
+                "properties": {
+                  "cluster_crash": {
+                    "property": "cluster_crash",
+                    "type": "boolean",
+                    "title": "Crash?",
+                    "default": false
+                  },
+                  "cluster_delay": {
+                    "property": "cluster_delay",
+                    "type": "number",
+                    "title": "Delay",
+                    "default": "0"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "recover_cluster": {
+                    "property": "recover_cluster",
+                    "type": "boolean",
+                    "title": "Enable?",
+                    "default": true
+                  },
+                  "recover_cluster_delay": {
+                    "property": "recover_cluster_delay",
+                    "type": "number",
+                    "title": "Delay",
+                    "default": "0"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "restart_cluster": {
+                    "property": "restart_cluster",
+                    "type": "boolean",
+                    "title": "Enable?",
+                    "default": true
+                  },
+                  "restart_cluster_delay": {
+                    "property": "restart_cluster_delay",
+                    "type": "number",
+                    "title": "Delay",
+                    "default": "0"
+                  }
+                }
+              }
+            ],
+            [
+              { "title": "Post Process" },
+              {
+                "type": "object",
+                "properties": {
+                  "postpro_crash": {
+                    "property": "postpro_crash",
+                    "type": "boolean",
+                    "title": "Crash?",
+                    "default": false
+                  },
+                  "postpro_delay": {
+                    "property": "postpro_delay",
+                    "type": "number",
+                    "title": "Delay",
+                    "default": "0"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "recover_postpro": {
+                    "property": "recover_postpro",
+                    "type": "boolean",
+                    "title": "Enable?",
+                    "default": true
+                  },
+                  "recover_postpro_delay": {
+                    "property": "recover_postpro_delay",
+                    "type": "number",
+                    "title": "Delay",
+                    "default": "0"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "restart_postpro": {
+                    "property": "restart_postpro",
+                    "type": "boolean",
+                    "title": "Enable?",
+                    "default": true
+                  },
+                  "restart_postpro_delay": {
+                    "property": "restart_postpro_delay",
+                    "type": "number",
+                    "title": "Delay",
+                    "default": "0"
+                  },
+                  "restart_postpro_copy_outerr": {
+                    "property": "restart_postpro_copy_outerr",
+                    "type": "boolean",
+                    "title": "Restart copies out/err?",
+                    "default": false
+                  }
+                }
+              }
+            ]
+          ]
+        },
+        "no_cluster_job": {
+          "property": "no_cluster_job",
+          "type": "boolean",
+          "title": "Do not actually submit job script on cluster",
+          "default": false
+        },
+        "crash_will_reset": {
+          "property": "crash_will_reset",
+          "type": "boolean",
+          "title": "Crashes will reset to false after they are first triggered",
+          "default": true
+        }
+      }
+    },
+    "validationTests": {
+      "title": "Input Fields Validation Tests",
+      "type": "object",
+      "properties": {
+        "inptest_text_odd_number": {
+          "property": "inptest_text_odd_number",
+          "type": "string",
+          "title": "This field must contain a odd number",
+          "default": "1"
+        },
+        "inptest_checkboxes": {
+          "type": "object",
+          "title": "Exactly two checkboxes must be set:",
+          "properties": {
+            "inptest_checkbox_1": {
+              "property": "inptest_checkbox_1",
+              "type": "boolean",
+              "default": "1"
+            },
+            "inptest_checkbox_2": {
+              "property": "inptest_checkbox_2",
+              "type": "boolean",
+              "default": "0"
+            },
+            "inptest_checkbox_3": {
+              "property": "inptest_checkbox_3",
+              "type": "boolean",
+              "default": "1"
+            },
+            "inptest_checkbox_4": {
+              "property": "inptest_checkbox_4",
+              "type": "boolean",
+              "default": "0"
+            }
+          }
+        },
+        "inptest_hidden_field": {
+          "property": "inptest_hidden_field",
+          "title": "A hidden field is here [ ] which MUST have the value 'XyZ'.",
+          "type": "string",
+          "default": "XyZ"
+        },
+        "inptest_password_field": {
+          "property": "inptest_password_field",
+          "title": "This password field must be left blank or contain 'XyZ':",
+          "type": "string",
+          "default": ""
+        },
+        "inptest_radios": {
+          "title": "The first or last radio button must be selected:",
+          "type": "object",
+          "properties": {
+            "inptest_radio_1": {
+              "property": "inptest_radio",
+              "type": "boolean",
+              "default": "1",
+              "returnValue": "first"
+            },
+            "inptest_radio_2": {
+              "property": "inptest_radio",
+              "type": "boolean",
+              "default": "0",
+              "returnValue": "middle"
+            },
+            "inptest_radio_3": {
+              "property": "inptest_radio",
+              "type": "boolean",
+              "default": "0",
+              "returnValue": "last"
+            }
+          }
+        },
+        "inptest_textarea": {
+          "property": "inptest_textarea",
+          "type": "string",
+          "title": " This text area MUST contain the word 'XyZ':",
+          "default": "My name is XyZ Jones."
+        },
+        "inptest": {
+          "property": "inptest",
+          "title": "This text is stored deep in the params and must contain 'Deep'",
+          "type": "object",
+          "properties": {
+            "property": "deep",
+            "type": "string",
+            "default": "So deep."
+          }
+        },
+        "inptest_select": {
+          "property": "inptest_select",
+          "title": "This selection box must be set to an odd number:",
+          "type": "number",
+          "enum": [1, 2, 3, 4],
+          "default": 3
+        },
+        "refresh_count": {
+          "property": "refresh_count",
+          "title": "Refresh count 0 |",
+          "default": "0"
+        }
+      }
+    }
+  }
+}

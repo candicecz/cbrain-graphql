@@ -28,15 +28,7 @@ const sortResults = ({ sortBy, orderBy = "ASC", results }) => {
   if (!sortBy) return results;
   const formatted = f => (R.type(f) === "String" ? R.toLower(f) : f);
   const ordered = values => (orderBy === "ASC" ? R.ascend : R.descend)(values);
-  return R.sort(
-    ordered(
-      R.compose(
-        formatted,
-        R.prop(`${sortBy}`)
-      )
-    ),
-    results
-  );
+  return R.sort(ordered(R.compose(formatted, R.prop(`${sortBy}`))), results);
 };
 
 /* 

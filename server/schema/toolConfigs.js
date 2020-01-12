@@ -6,12 +6,14 @@ const {
   snakeKey,
   camelKey
 } = require("../utils");
+const R = require("ramda");
 
 const route = "tool_configs";
 
 const typeDefs = gql`
   extend type Query {
     getToolConfigById(id: ID!): ToolConfig
+    getToolConfigByToolId(id: ID!): ToolConfig
     getToolConfigs(
       cursor: Int
       limit: Int
@@ -62,6 +64,19 @@ const resolvers = {
         results: sortResults({ sortBy, orderBy, results }),
         route
       });
+    },
+    getToolConfigByToolId: async (_, { id }, context) => {
+      const result = await fetchCbrain(context, route)
+        .then(data => data.json())
+        .then(toolconfigs =>
+          toolconfigs.filter(toolconfig => {
+            if (+id === +toolconfig.tool_id) {
+              return toolconfig;
+            }
+          })
+        );
+
+      return camelKey(result[0]);
     },
     getToolConfigById: (_, { id }, context) => {
       return fetchCbrain(context, `${route}/${id}`)

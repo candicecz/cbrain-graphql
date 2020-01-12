@@ -126,10 +126,11 @@ const resolvers = {
         route
       });
     },
-    getUserById: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/${id}`)
+    getUserById: async (_, { id }, context) => {
+      const results = await fetchCbrain(context, `${route}/${id}`)
         .then(data => data.json())
         .then(user => camelKey(user));
+      return results;
     }
   },
   Mutation: {

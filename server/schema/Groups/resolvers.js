@@ -86,20 +86,6 @@ const resolvers = {
         };
       });
     },
-    deleteGroup: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/${id}`, { method: "DELETE" }).then(
-        res => {
-          return {
-            status: res.status,
-            success: res.status === 200,
-            message:
-              res.status === 200
-                ? `Deleted project id: ${id} successfully`
-                : `Error deleting project id:${id} successfully`
-          };
-        }
-      );
-    },
     deleteGroups: async (_, { ids }, context) => {
       const data = ids.map(id => {
         return context.loaders.deleteGroup.load(id);

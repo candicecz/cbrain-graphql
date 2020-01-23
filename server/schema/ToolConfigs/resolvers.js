@@ -1,53 +1,12 @@
-const { gql } = require("apollo-server");
-const fetchCbrain = require("../cbrain-api");
 const {
   paginateResults,
   sortResults,
   snakeKey,
   camelKey
-} = require("../utils");
-const R = require("ramda");
+} = require("../../utils");
+const fetchCbrain = require("../../cbrain-api");
 
 const route = "tool_configs";
-
-const typeDefs = gql`
-  extend type Query {
-    getToolConfigById(id: ID!): ToolConfig
-    getToolConfigByToolId(id: ID!): ToolConfig
-    getToolConfigs(
-      cursor: Int
-      limit: Int
-      sortBy: ToolConfigSort
-      orderBy: Order
-    ): ToolConfigFeed!
-  }
-
-  type ToolConfig {
-    id: ID
-    version: String
-    description: String
-    toolId: ID
-    bourreauId: ID
-    groupId: ID
-    ncpus: Int
-  }
-
-  type ToolConfigFeed {
-    cursor: Int!
-    hasMore: Boolean!
-    toolConfigs: [ToolConfig]!
-  }
-
-  enum ToolConfigSort {
-    id
-    version
-    description
-    toolId
-    bourreauId
-    groupId
-    ncpus
-  }
-`;
 
 const resolvers = {
   Query: {
@@ -86,4 +45,4 @@ const resolvers = {
   }
 };
 
-module.exports = { typeDefs, resolvers };
+module.exports = { resolvers };

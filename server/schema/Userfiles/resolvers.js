@@ -1,6 +1,6 @@
 const { gql } = require("apollo-server");
 const FormData = require("form-data");
-const fetchCbrain = require("../cbrain-api");
+const fetchCbrain = require("../../cbrain-api");
 const fs = require("fs");
 const mkdirp = require("mkdirp");
 const shortid = require("shortid");
@@ -11,105 +11,10 @@ const {
   snakeKey,
   camelKey,
   formatBytes
-} = require("../utils");
+} = require("../../utils");
+const changeCase = require("change-case");
 
 const route = "userfiles";
-
-const typeDefs = gql`
-  extend type Query {
-    userfilesTableHeaders: [Heading!]!
-    getUserfileById(id: ID!): Userfile
-    getUserfiles(
-      cursor: Int
-      limit: Int
-      sortBy: UserfileSort
-      orderBy: Order
-    ): UserfileFeed!
-    getUserfileContent(id: ID!): String
-    getUserfilesByGroupId(
-      id: ID!
-      cursor: Int
-      limit: Int
-      sortBy: UserfileSort
-      orderBy: Order
-    ): UserfileFeed!
-  }
-
-  extend type Mutation {
-    singleUpload(input: UserfileInput): Response
-    deleteUserfiles(ids: [ID!]!): Response
-    updateUserfile(id: ID!, input: UpdateUserfileInput): Response
-  }
-
-  type Userfile {
-    id: ID
-    name: String
-    size: String
-    userId: ID
-    parentId: ID
-    type: String
-    groupId: ID
-    dataProviderId: ID
-    groupWritable: String
-    numFiles: Int
-    hidden: String
-    immutable: String
-    archived: String
-    description: String
-    user: User
-    group: Group
-    dataProvider: DataProvider
-  }
-
-  type UserfileFeed {
-    cursor: Int!
-    hasMore: Boolean!
-    userfiles: [Userfile]!
-  }
-
-  enum ExtractMode {
-    collection
-    multiple
-  }
-
-  input UserfileInput {
-    file: Upload!
-    dataProviderId: ID
-    groupId: ID
-    extract: Boolean
-    fileType: String
-    extractMode: ExtractMode
-  }
-
-  enum UserfileSort {
-    id
-    name
-    size
-    userId
-    parentId
-    type
-    groupId
-    dataProviderId
-    groupWritable
-    numFiles
-    hidden
-    immutable
-    archived
-    description
-  }
-
-  input UpdateUserfileInput {
-    name: String
-    description: String
-    groupId: ID
-    type: String
-    archived: Boolean
-    hidden: Boolean
-    immutable: Boolean
-    groupWritable: Boolean
-    userId: ID
-  }
-`;
 
 const UPLOAD_DIR = "./uploads";
 
@@ -174,19 +79,27 @@ const transformUserfiles = async (userfile, context) => {
 
 const resolvers = {
   Query: {
-    getUserfiles: async (_, { cursor, limit, sortBy, orderBy }, context) => {
-      const data = await fetchCbrain(context, route)
+    getUserfiles: async (
+      _,
+      { cursor = 1, limit = 100, sortBy, orderBy },
+      context
+    ) => {
+      const data = await fetchCbrain(
+        context,
+        `userfiles?page=${cursor}&per_page=${limit}`
+      )
         .then(data => data.json())
         .then(userfiles =>
           userfiles.map(async userfile => transformUserfiles(userfile, context))
         );
       const results = await Promise.all(data);
-      return paginateResults({
-        cursor,
-        limit,
-        results: sortResults({ sortBy, orderBy, results }),
-        route
-      });
+
+      return {
+        hasMore: false,
+        cursor: cursor + 1,
+        [`${changeCase.camelCase(route)}`]:
+          sortResults({ sortBy, orderBy, results }) || []
+      };
     },
     getUserfileById: (_, { id }, context) => {
       return fetchCbrain(context, `${route}/${id}`)
@@ -195,31 +108,35 @@ const resolvers = {
     },
     getUserfilesByGroupId: async (
       _,
-      { id, cursor, limit, sortBy, orderBy },
+      { id, cursor = 1, limit = 100, sortBy, orderBy },
       context
     ) => {
-      const data = await fetchCbrain(context, route)
+      const data = await fetchCbrain(
+        context,
+        `userfiles?page=${cursor}&per_page=${limit}`
+      )
         .then(data => data.json())
-        .then(userfiles =>
-          userfiles.map(async userfile => transformUserfiles(userfile, context))
-        );
+        .then(userfiles => {
+          return userfiles.map(async userfile =>
+            transformUserfiles(userfile, context)
+          );
+        });
       const results = await Promise.all(data);
 
-      return paginateResults({
-        cursor,
-        limit,
-        results: sortResults({
-          sortBy,
-          orderBy,
-          results: R.filter(r => {
-            return (
-              (r.groupId && +r.groupId) === +id ||
-              (r.group && +r.group.id) === +id
-            );
-          }, results)
-        }),
-        route
-      });
+      return {
+        hasMore: false,
+        cursor: cursor + 1,
+        [`${changeCase.camelCase(route)}`]:
+          sortResults({
+            sortBy,
+            orderBy,
+            results: R.filter(r => {
+              if (r.groupId || (r.group && r.group.id)) {
+                return (+r.groupId || r.group.id) === +id;
+              }
+            }, results)
+          }) || []
+      };
     },
     getUserfileContent: (_, { id }, context) => {
       // Note: Might need adjustments to work
@@ -306,4 +223,4 @@ const resolvers = {
   }
 };
 
-module.exports = { typeDefs, resolvers };
+module.exports = { resolvers };

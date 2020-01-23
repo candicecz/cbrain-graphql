@@ -2,17 +2,17 @@ const { gql } = require("apollo-server");
 const { makeExecutableSchema } = require("graphql-tools");
 const GraphQLJSON = require("graphql-type-json");
 const { GraphQLUpload } = require("graphql-upload");
-const sessions = require("./sessions");
-const groups = require("./groups");
-const users = require("./users");
-const toolConfigs = require("./toolConfigs");
-const tags = require("./tags");
-const bourreaux = require("./bourreaux");
-const dataProviders = require("./dataProviders");
-const tasks = require("./tasks");
-const taskParameters = require("./taskParameters");
-const tools = require("./tools");
-const userfiles = require("./userfiles");
+const bourreaux = require("./Bourreaux/");
+const dataProviders = require("./DataProviders/");
+const groups = require("./Groups/");
+const sessions = require("./Sessions/");
+const tags = require("./Tags/");
+const tasks = require("./Tasks/");
+const taskParameters = require("./TaskParameters/");
+const toolConfigs = require("./ToolConfigs/");
+const tools = require("./Tools/");
+const userfiles = require("./Userfiles/");
+const users = require("./Users/");
 
 const typeDefs = gql`
   type Query {
@@ -74,4 +74,15 @@ const schema = makeExecutableSchema({
   ]
 });
 
-module.exports = schema;
+const createLoaders = context => {
+  return {
+    ...groups.loaders(context),
+    ...dataProviders.loaders(context),
+    ...users.loaders(context),
+    ...userfiles.loaders(context),
+    ...tasks.loaders(context),
+    ...bourreaux.loaders(context)
+  };
+};
+
+module.exports = { schema, createLoaders };

@@ -2,8 +2,7 @@ const express = require("express");
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const { ApolloServer } = require("apollo-server-express");
-const schema = require("./schema");
-const { createLoaders } = require("./schema/loaders");
+const { schema, createLoaders } = require("./schema");
 
 require("dotenv").config();
 

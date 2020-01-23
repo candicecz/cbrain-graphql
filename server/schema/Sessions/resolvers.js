@@ -1,21 +1,10 @@
-const { gql } = require("apollo-server");
-const fetchCbrain = require("../cbrain-api");
-
-const typeDefs = gql`
-  extend type Query {
-    session: Session
-  }
-  extend type Mutation {
-    login(login: String!, password: String!): Session
-    logout: Response
-  }
-
-  type Session {
-    userId: ID
-    token: String
-    message: String
-  }
-`;
+const {
+  paginateResults,
+  sortResults,
+  snakeKey,
+  camelKey
+} = require("../../utils");
+const fetchCbrain = require("../../cbrain-api");
 
 const resolvers = {
   Query: {
@@ -64,4 +53,4 @@ const resolvers = {
   }
 };
 
-module.exports = { typeDefs, resolvers };
+module.exports = { resolvers };

@@ -211,7 +211,7 @@ const resolvers = {
           method: "DELETE"
         },
         {
-          "file_ids[]": ids
+          file_ids: ids
         }
       ).then(data => {
         return {

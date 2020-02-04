@@ -1,62 +1,41 @@
-const {
-  paginateResults,
-  sortResults,
-  snakeKey,
-  camelKey
-} = require("../../utils");
-const fetchCbrain = require("../../cbrain-api");
+const { sort } = require("../../utils");
+const humps = require("humps");
+const qs = require("qs");
 
-const route = "tags";
+const relativeURL = "tags";
 
 const resolvers = {
   Query: {
-    getTags: async (_, { cursor, limit, sortBy, orderBy }, context) => {
-      const results = await fetchCbrain(context, route)
-        .then(data => data.json())
-        .then(tags => tags.map(tag => camelKey(tag)));
-      return paginateResults({
-        cursor,
-        limit,
-        results: sortResults({ sortBy, orderBy, results }),
-        route
-      });
+    tags: async (_, { sortBy, orderBy }, context) => {
+      const data = await context.query(`${relativeURL}`);
+      return { feed: sort({ data, sortBy, orderBy }) };
     },
-    getTagById: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/${id}`)
-        .then(data => data.json())
-        .then(tag => camelKey(tag));
-    }
+    tag: async (_, { id }, context) =>
+      await context.query(`${relativeURL}/${id}`)
   },
   Mutation: {
-    createTag: (_, { input }, context) => {
-      const { user } = context;
-      return fetchCbrain(
-        context,
-        `${route}`,
-        { method: "POST" },
-        { tag: snakeKey({ ...input, user: user.userId }) }
-      )
-        .then(data => data.json())
-        .then(tag => camelKey(tag));
-    },
-    updateTag: (_, { id, input }, context) => {
-      const { user } = context;
-
-      return fetchCbrain(
-        context,
-        `${route}/${id}`,
-        { method: "PUT" },
-        { tag: snakeKey({ ...input, user: user.userId }) }
-      ).then(res => ({ status: res.status, success: res.status === 200 }));
-    },
-    deleteTag: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/${id}`, { method: "DELETE" }).then(
-        res => ({
-          status: res.status,
-          success: res.status === 200
+    createTag: async (_, { input }, context) => {
+      const query_string = qs.stringify({
+        tag: humps.decamelizeKeys({
+          ...input,
+          user: context.user.userId
         })
-      );
-    }
+      });
+      return await context.query(`${relativeURL}?${query_string}`, {
+        method: "POST"
+      });
+    },
+    updateTag: async (_, { id, input }, context) => {
+      const query_string = qs.stringify({
+        tag: humps.decamelizeKeys({ ...input, user: context.user.userId })
+      });
+
+      return await context.query(`${relativeURL}/${id}?${query_string}`, {
+        method: "PUT"
+      });
+    },
+    deleteTag: async (_, { id }, context) =>
+      await context.query(`${relativeURL}/${id}`, { method: "DELETE" })
   }
 };
 

@@ -1,77 +1,39 @@
-const {
-  paginateResults,
-  sortResults,
-  snakeKey,
-  camelKey
-} = require("../../utils");
+const { sort } = require("../../utils");
+const humps = require("humps");
+const qs = require("qs");
 
-const fetchCbrain = require("../../cbrain-api");
-const route = "users";
+const relativeURL = "users";
 
 const resolvers = {
   Query: {
-    getUsers: async (_, { cursor, limit, sortBy, orderBy }, context) => {
-      const results = await fetchCbrain(context, "users")
-        .then(data => data.json())
-        .then(users => users.map(user => camelKey(user)));
-      return paginateResults({
-        cursor,
-        limit,
-        results: sortResults({ sortBy, orderBy, results }),
-        route
-      });
+    users: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+      const data = await context.query(
+        `${relativeURL}?page=${cursor}&per_page=${limit}`
+      );
+      return {
+        feed: sort({ data, sortBy, orderBy })
+      };
     },
-    getUserById: async (_, { id }, context) => {
-      const results = await fetchCbrain(context, `${route}/${id}`)
-        .then(data => data.json())
-        .then(user => camelKey(user));
-      return results;
-    }
+    user: async (_, { id }, context) => await context.loaders.user.load(id)
   },
   Mutation: {
-    createUser: (_, { input }, context) => {
-      const { user, ...rest } = snakeKey(input);
-      return fetchCbrain(
-        context,
-        route,
-        { method: "POST" },
-        {
-          user: snakeKey(user),
-          ...rest
-        }
-      ).then(res => {
-        return {
-          status: res.status,
-          success: res.status === 200
-        };
+    createUser: async (_, { input }, context) => {
+      const query_string = qs.stringify({ ...humps.decamelizeKeys(input) });
+
+      return await context.query(`${relativeURL}?${query_string}`, {
+        method: "POST"
       });
     },
-    updateUser: (_, { id, input }, context) => {
-      const { user, ...rest } = snakeKey(input);
+    updateUser: async (_, { id, input }, context) => {
+      const query_string = qs.stringify({ ...humps.decamelizeKeys(input) });
 
-      return fetchCbrain(
-        context,
-        `${route}/${id}`,
-        { method: "PUT" },
-        {
-          user: snakeKey(user),
-          ...rest
-        }
-      )
-        .then(data => data.json())
-        .then(user => camelKey(user));
+      return await context.query(`${relativeURL}/${id}?${query_string}`, {
+        method: "PUT"
+      });
     },
-    deleteUser: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/${id}`, { method: "DELETE" }).then(
-        res => {
-          return {
-            status: res.status,
-            success: res.status === 200
-          };
-        }
-      );
-    }
+    deleteUser: async (_, { id }, context) =>
+      await context.query(`${relativeURL}/${id}`, { method: "DELETE" })
   }
 };
 
-module.exports = { resolvers };
+module.exports = { resolvers, relativeURL };

@@ -1,25 +1,14 @@
-const {
-  paginateResults,
-  sortResults,
-  snakeKey,
-  camelKey
-} = require("../../utils");
-const fetchCbrain = require("../../cbrain-api");
+const { sort } = require("../../utils");
 
-const route = "tools";
+const relativeURL = "tools";
 
 const resolvers = {
   Query: {
-    getTools: async (_, { cursor, limit, sortBy, orderBy }, context) => {
-      const results = await fetchCbrain(context, route)
-        .then(data => data.json())
-        .then(tools => tools.map(tool => camelKey(tool)));
-      return paginateResults({
-        cursor,
-        limit,
-        results: sortResults({ sortBy, orderBy, results }),
-        route
-      });
+    tools: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+      const data = context.query(
+        `${relativeURL}?page=${cursor}&per_page=${limit}`
+      );
+      return { feed: sort({ data, sortBy, orderBy }) };
     }
   }
 };

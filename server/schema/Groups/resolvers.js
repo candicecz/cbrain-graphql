@@ -1,50 +1,24 @@
-const {
-  paginateResults,
-  sortResults,
-  snakeKey,
-  camelKey
-} = require("../../utils");
+const humps = require("humps");
+const qs = require("qs");
+const { sort } = require("../../utils");
 
-const fetchCbrain = require("../../cbrain-api");
-const route = "groups";
-
-const transformGroup = async (group, context) => {
-  if (context.loaders === undefined) {
-    return camelKey(group);
-  }
-  const u = await context.loaders.userfilesByGroupIds.load(group.id);
-  const t = await context.loaders.tasksByGroupIds.load(group.id);
-  return {
-    ...camelKey(group),
-    files: u.userfiles.length,
-    tasks: t.tasks.length,
-    users: 0
-  };
-};
+const relativeURL = "groups";
 
 const resolvers = {
   Query: {
-    getGroups: async (_, { cursor, limit, sortBy, orderBy }, context) => {
-      const data = await fetchCbrain(context, route)
-        .then(data => data.json())
-        .then(groups => groups.map(group => transformGroup(group, context)));
-      const results = await Promise.all(data);
+    groups: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+      const groups = await context.query(
+        `${relativeURL}?page=${cursor}&per_page=${limit}`
+      );
+      const data = await context.loaders.nestedGroup.loadMany(groups);
 
-      return paginateResults({
-        cursor,
-        limit,
-        results: sortResults({
-          sortBy,
-          orderBy,
-          results
-        }),
-        route
-      });
+      return {
+        feed: sort({ data, sortBy, orderBy })
+      };
     },
-    getGroupById: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/${id}`)
-        .then(data => data.json())
-        .then(group => transformGroup(group, context));
+    group: async (_, { id }, context) => {
+      const group = await context.loaders.group.load(id);
+      return await context.loaders.nestedGroup.load(group);
     },
     groupTableHeaders: () => {
       return [
@@ -60,40 +34,47 @@ const resolvers = {
   },
 
   Mutation: {
-    createGroup: (_, { input }, context) => {
-      const { user } = context;
-      return fetchCbrain(
-        context,
-        route,
-        { method: "POST" },
-        { group: snakeKey({ ...input, creatorId: user.userId }) }
-      )
-        .then(data => data.json())
-        .then(group => camelKey(group));
-    },
-    updateGroup: (_, { id, input }, context) => {
-      const { user } = context;
+    createGroup: async (_, { input }, context) => {
+      const query_string = qs.stringify(
+        {
+          group: humps.decamelizeKeys({
+            ...input,
+            creatorId: context.user.userId
+          })
+        },
+        { encode: false }
+      );
 
-      return fetchCbrain(
-        context,
-        `${route}/${id}`,
-        { method: "PUT" },
-        { group: snakeKey({ ...input, creatorId: user.userId }) }
-      ).then(res => {
-        return {
-          status: res.status,
-          success: res.status === 200
-        };
+      const group = await context.query(`${relativeURL}?${query_string}`, {
+        method: "POST"
+      });
+      return {
+        ...group,
+        files: [],
+        tasks: [],
+        users: []
+      };
+    },
+
+    updateGroup: async (_, { id, input }, context) => {
+      const query_string = qs.stringify(
+        {
+          group: humps.decamelizeKeys({
+            ...input,
+            creatorId: context.user.userId
+          })
+        },
+        { encode: false }
+      );
+
+      return await context.query(`${relativeURL}/${id}?${query_string}`, {
+        method: "PUT"
       });
     },
-    deleteGroups: async (_, { ids }, context) => {
-      const data = ids.map(id => {
-        return context.loaders.deleteGroup.load(id);
-      });
-      const results = await Promise.all(data);
-      return results;
-    }
+
+    deleteGroups: async (_, { ids }, context) =>
+      await context.loaders.deleteGroup.loadMany(ids)
   }
 };
 
-module.exports = { resolvers };
+module.exports = { resolvers, relativeURL };

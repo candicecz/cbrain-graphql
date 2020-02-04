@@ -26,7 +26,21 @@ const typeDefs = gql`
   type Response {
     success: Boolean!
     status: Int
-    message: String
+  }
+
+  type Heading {
+    header: String!
+    accessor: String!
+  }
+
+  #  [TO DO] This field should be added to all feed types.
+  #  The shape of the PageInfo type is TBD by the api once it returns some
+  #  indication of cursor or hasNext, etc.
+  #  [NOTE] in feed fields the cursor argument should be removed in favour of
+  #  "page" depending on what is used.
+  type PageInfo {
+    hasPrevious: Boolean!
+    hasNext: Boolean!
   }
 
   enum Order {

@@ -2,9 +2,8 @@ const { gql } = require("apollo-server");
 
 const typeDefs = gql`
   extend type Query {
-    getBourreauById(id: ID!): Bourreau
-
-    getBourreaux(
+    bourreau(id: ID!): Bourreau
+    bourreaux(
       cursor: Int
       limit: Int
       sortBy: BourreauSort
@@ -23,9 +22,7 @@ const typeDefs = gql`
   }
 
   type BourreauFeed {
-    cursor: Int!
-    hasMore: Boolean!
-    bourreaux: [Bourreau]
+    feed: [Bourreau!]
   }
 
   enum BourreauSort {

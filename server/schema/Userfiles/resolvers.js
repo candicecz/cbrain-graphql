@@ -1,20 +1,10 @@
-const { gql } = require("apollo-server");
 const FormData = require("form-data");
-const fetchCbrain = require("../../cbrain-api");
 const fs = require("fs");
 const mkdirp = require("mkdirp");
 const shortid = require("shortid");
-const R = require("ramda");
-const {
-  paginateResults,
-  sortResults,
-  snakeKey,
-  camelKey,
-  formatBytes
-} = require("../../utils");
-const changeCase = require("change-case");
+const { sort } = require("../../utils");
 
-const route = "userfiles";
+const relativeURL = "userfiles";
 
 const UPLOAD_DIR = "./uploads";
 
@@ -56,93 +46,36 @@ const processUpload = async upload => {
   return { tmpPath: path, filename };
 };
 
-const transformUserfiles = async (userfile, context) => {
-  if (context.loaders === undefined) {
-    return camelKey(userfile);
-  }
-  const { user_id, group_id, data_provider_id, ...rest } = await userfile;
-  const user = await context.loaders.user.load(user_id);
-  const group = await context.loaders.group.load(group_id);
-  const dataProvider = await context.loaders.dataProvider.load(
-    data_provider_id
-  );
-  const { size } = userfile;
-
-  return camelKey({
-    ...userfile,
-    size: formatBytes(+size),
-    user,
-    group,
-    dataProvider
-  });
-};
-
 const resolvers = {
   Query: {
-    getUserfiles: async (
+    userfile: async (_, { id }, context) => {
+      const userfile = await context.query(`${relativeURL}/${id}`);
+      const data = await context.loaders.nestedUserfile.load(userfile);
+      return data;
+    },
+    userfiles: async (
       _,
-      { cursor = 1, limit = 100, sortBy, orderBy },
+      { cursor, limit, sortBy, orderBy, groupId },
       context
     ) => {
-      const data = await fetchCbrain(
-        context,
-        `userfiles?page=${cursor}&per_page=${limit}`
-      )
-        .then(data => data.json())
-        .then(userfiles =>
-          userfiles.map(async userfile => transformUserfiles(userfile, context))
+      let userfiles;
+      if (groupId) {
+        userfiles = await context.loaders.userfilesByGroupId.load(+groupId);
+      } else {
+        userfiles = await context.query(
+          `${relativeURL}?page=${cursor}&per_page=${limit}`
         );
-      const results = await Promise.all(data);
+      }
+      const data = await context.loaders.nestedUserfile.loadMany(userfiles);
 
-      return {
-        hasMore: false,
-        cursor: cursor + 1,
-        [`${changeCase.camelCase(route)}`]:
-          sortResults({ sortBy, orderBy, results }) || []
-      };
+      return { feed: sort({ data, sortBy, orderBy }) };
     },
-    getUserfileById: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/${id}`)
-        .then(data => data.json())
-        .then(async userfile => transformUserfiles(userfile, context));
-    },
-    getUserfilesByGroupId: async (
-      _,
-      { id, cursor = 1, limit = 100, sortBy, orderBy },
-      context
-    ) => {
-      const data = await fetchCbrain(
-        context,
-        `userfiles?page=${cursor}&per_page=${limit}`
-      )
-        .then(data => data.json())
-        .then(userfiles => {
-          return userfiles.map(async userfile =>
-            transformUserfiles(userfile, context)
-          );
-        });
-      const results = await Promise.all(data);
 
-      return {
-        hasMore: false,
-        cursor: cursor + 1,
-        [`${changeCase.camelCase(route)}`]:
-          sortResults({
-            sortBy,
-            orderBy,
-            results: R.filter(r => {
-              if (r.groupId || (r.group && r.group.id)) {
-                return (+r.groupId || r.group.id) === +id;
-              }
-            }, results)
-          }) || []
-      };
-    },
-    getUserfileContent: (_, { id }, context) => {
+    userfileContent: async (_, { id }, context) => {
       // Note: Might need adjustments to work
-      return fetchCbrain(context, `${route}/${id}/content`).then(data => data);
+      return await context.query(`${relativeURL}/${id}/content`);
     },
-    userfilesTableHeaders: () => {
+    userfileTableHeaders: () => {
       return [
         { header: "name", accessor: "name" },
         { header: "type", accessor: "type" },
@@ -155,6 +88,7 @@ const resolvers = {
     }
   },
   Mutation: {
+    // [TO DO]: Leave for last so you can test in ui
     singleUpload: async (_, { input }, context) => {
       const { tmpPath, filename } = await processUpload(input.file);
       const stream = fs.createReadStream(tmpPath);
@@ -173,54 +107,33 @@ const resolvers = {
         formData.append("_up_ex_mode", input.extractMode);
       }
 
-      await fetchCbrain(context, route, {
+      const data = await context.query(relativeURL, {
         method: "POST",
         body: formData
-      })
-        .then(data => {
-          deleteTmpUpload(tmpPath);
-          return {
-            status: data.status,
-            success: data.status === 200 || data.status === 201
-          };
-        })
-        .catch(err => {
-          deleteTmpUpload(tmpPath);
-          return;
-        });
+      });
+      deleteTmpUpload(tmpPath);
+      return data;
     },
     updateUserfile: async (_, { id, input }, context) => {
-      return fetchCbrain(
-        context,
-        `${route}/${id}`,
-        { method: "PUT" },
-        { userfile: snakeKey({ ...input }) }
-      ).then(res => {
-        return {
-          status: res.status,
-          success: res.status === 200,
-          message: res.statusText
-        };
+      const query_string = qs.stringify(
+        { userfile: humps.decamelizeKeys(input) },
+        { encode: false }
+      );
+      return await context.query(`${relativeURL}/${id}?${query_string}`, {
+        method: "PUT"
       });
     },
     deleteUserfiles: async (_, { ids }, context) => {
-      await fetchCbrain(
-        context,
-        `${route}/delete_files`,
-        {
-          method: "DELETE"
-        },
-        {
-          file_ids: ids
-        }
-      ).then(data => {
-        return {
-          status: data.status,
-          success: data.status === 200 || data.status === 201
-        };
-      });
+      const query_string = qs.stringify(
+        { file_ids: ids },
+        { encode: false, indices: false, arrayFormat: "brackets" }
+      );
+      return await context.query(
+        `${relativeURL}/delete_files?${query_string}`,
+        { method: "DELETE" }
+      );
     }
   }
 };
 
-module.exports = { resolvers };
+module.exports = { resolvers, relativeURL };

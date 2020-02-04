@@ -1,21 +1,12 @@
+const { relativeURL } = require("./resolvers");
 const DataLoader = require("dataloader");
-const { resolvers } = require("./resolvers");
 
-const getBourreaux = async (ids, context) => {
-  try {
-    return ids.map(id => {
-      return resolvers.Query.getBourreauById(
-        null,
-        { id: id.toString() },
-        context
-      );
-    });
-  } catch (err) {
-    throw err;
-  }
+const batchGetBourreaux = async (ids, context) => {
+  return ids.map(async id => await context.query(`${relativeURL}/${id}`));
 };
+
 const loaders = context => ({
-  bourreau: new DataLoader(ids => getBourreaux(ids, context))
+  bourreau: new DataLoader(ids => batchGetBourreaux(ids, context))
 });
 
 module.exports = { loaders };

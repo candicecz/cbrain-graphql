@@ -1,45 +1,30 @@
 const DataLoader = require("dataloader");
-const { resolvers } = require("./resolvers");
-const fetchCbrain = require("../../cbrain-api");
+const { relativeURL } = require("./resolvers");
 
-const route = "groups";
-
-const deleteGroups = async (ids, context) => {
-  try {
-    const data = ids.map(async id => {
-      return fetchCbrain(context, `${route}/${id}`, { method: "DELETE" }).then(
-        res => {
-          return {
-            status: res.status,
-            success: res.status === 200,
-            message:
-              res.status === 200
-                ? `Deleted project id: ${id} successfully`
-                : `Error deleting project id:${id} successfully`
-          };
-        }
-      );
-    });
-    const results = await Promise.all(data);
-    return results;
-  } catch (err) {
-    throw err;
-  }
+const batchGetNestedFields = async (groups, context) => {
+  return groups.map(async group => {
+    const tasks = await context.loaders.tasksByGroupId.load(group.id);
+    const userfiles = await context.loaders.userfilesByGroupId.load(group.id);
+    return { ...group, userfiles, tasks, users: [] };
+  });
 };
 
-const getGroups = async (ids, context) => {
-  try {
-    return ids.map(async id => {
-      return resolvers.Query.getGroupById(null, { id: id.toString() }, context);
-    });
-  } catch (err) {
-    throw err;
-  }
+const batchGetGroups = async (ids, context) => {
+  return ids.map(async id => {
+    return await context.query(`${relativeURL}/${id}`);
+  });
 };
+
+const batchDeleteGroups = async (ids, context) =>
+  ids.map(
+    async id =>
+      await context.query(`${relativeURL}/${id}`, { method: "DELETE" })
+  );
 
 const loaders = context => ({
-  deleteGroup: new DataLoader(ids => deleteGroups(ids, context)),
-  group: new DataLoader(ids => getGroups(ids, context))
+  deleteGroup: new DataLoader(ids => batchDeleteGroups(ids, context)),
+  group: new DataLoader(ids => batchGetGroups(ids, context)),
+  nestedGroup: new DataLoader(groups => batchGetNestedFields(groups, context))
 });
 
 module.exports = { loaders };

@@ -2,15 +2,9 @@ const { gql } = require("apollo-server");
 
 const typeDefs = gql`
   extend type Query {
-    getTasks(
-      cursor: Int
-      limit: Int
-      sortBy: TaskSort
-      orderBy: Order
-    ): TaskFeed!
-    getTaskById(id: ID!): Task
-    getTasksByGroupId(
-      id: ID!
+    task(id: ID!): Task
+    tasks(
+      groupId: ID
       cursor: Int
       limit: Int
       sortBy: TaskSort
@@ -68,9 +62,7 @@ const typeDefs = gql`
   }
 
   type TaskFeed {
-    cursor: Int!
-    hasMore: Boolean!
-    tasks: [Task]!
+    feed: [Task!]
   }
 
   enum TaskSort {

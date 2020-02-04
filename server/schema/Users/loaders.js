@@ -1,10 +1,10 @@
 const DataLoader = require("dataloader");
-const { resolvers } = require("./resolvers");
+const { relativeURL } = require("./resolvers");
 
-const getUsers = async (ids, context) => {
+const batchGetUsers = async (ids, context) => {
   try {
-    return ids.map(id => {
-      return resolvers.Query.getUserById(null, { id: id.toString() }, context);
+    return ids.map(async id => {
+      return await context.query(`${relativeURL}/${id}`);
     });
   } catch (err) {
     throw err;
@@ -12,7 +12,7 @@ const getUsers = async (ids, context) => {
 };
 
 const loaders = context => ({
-  user: new DataLoader(ids => getUsers(ids, context))
+  user: new DataLoader(ids => batchGetUsers(ids, context))
 });
 
 module.exports = { loaders };

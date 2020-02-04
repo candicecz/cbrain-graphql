@@ -9,17 +9,12 @@ a password if they want to edit their profile.
 */
 const typeDefs = gql`
   extend type Query {
-    getUserById(id: ID!): User
-    getUsers(
-      cursor: Int
-      limit: Int
-      sortBy: UserSort
-      orderBy: Order
-    ): UserFeed!
+    user(id: ID!): User
+    users(cursor: Int, limit: Int, sortBy: UserSort, orderBy: Order): UserFeed!
   }
 
   extend type Mutation {
-    createUser(input: UserInput): Response
+    createUser(input: UserInput): User
     deleteUser(id: ID!): Response
     updateUser(id: ID!, input: UpdateUserInput): User
   }
@@ -51,7 +46,6 @@ const typeDefs = gql`
   }
 
   input UpdateUserInfo {
-    login: String
     password: String
     passwordConfirmation: String
     fullName: String
@@ -59,7 +53,7 @@ const typeDefs = gql`
     city: String
     country: String
     timeZone: String
-    type: UserType!
+    type: UserType
     siteId: Int
     accountLocked: String
   }
@@ -79,9 +73,7 @@ const typeDefs = gql`
   }
 
   type UserFeed {
-    cursor: Int!
-    hasMore: Boolean!
-    users: [User]!
+    feed: [User]!
   }
 
   enum UserType {

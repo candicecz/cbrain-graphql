@@ -1,32 +1,22 @@
-const {
-  paginateResults,
-  sortResults,
-  snakeKey,
-  camelKey
-} = require("../../utils");
-const fetchCbrain = require("../../cbrain-api");
+const { sort } = require("../../utils");
 
-const route = "bourreaux";
+const relativeURL = "bourreaux";
 
 const resolvers = {
   Query: {
-    getBourreaux: async (_, { cursor, limit, sortBy, orderBy }, context) => {
-      const results = await fetchCbrain(context, route)
-        .then(data => data.json())
-        .then(bourreaux => bourreaux.map(bourreau => camelKey(bourreau)));
-      return paginateResults({
-        cursor,
-        limit,
-        results: sortResults({ sortBy, orderBy, results }),
-        route
-      });
+    bourreaux: async (
+      _,
+      { cursor = 1, limit = 20, sortBy, orderBy },
+      context
+    ) => {
+      const data = await context.query(
+        `${relativeURL}?page=${cursor}&per_page=${limit}`
+      );
+      return { feed: sort({ data, sortBy, orderBy }) };
     },
-    getBourreauById: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/${id}`)
-        .then(data => data.json())
-        .then(bourreau => camelKey(bourreau));
-    }
+    bourreau: async (_, { id }, context) =>
+      await context.loaders.bourreau.load(id)
   }
 };
 
-module.exports = { resolvers };
+module.exports = { resolvers, relativeURL };

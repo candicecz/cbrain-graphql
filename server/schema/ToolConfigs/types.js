@@ -2,9 +2,8 @@ const { gql } = require("apollo-server");
 
 const typeDefs = gql`
   extend type Query {
-    getToolConfigById(id: ID!): ToolConfig
-    getToolConfigByToolId(id: ID!): ToolConfig
-    getToolConfigs(
+    toolConfig(id: ID!): ToolConfig
+    toolConfigs(
       cursor: Int
       limit: Int
       sortBy: ToolConfigSort
@@ -23,9 +22,7 @@ const typeDefs = gql`
   }
 
   type ToolConfigFeed {
-    cursor: Int!
-    hasMore: Boolean!
-    toolConfigs: [ToolConfig]!
+    feed: [ToolConfig]!
   }
 
   enum ToolConfigSort {

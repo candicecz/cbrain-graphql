@@ -1,22 +1,26 @@
 const DataLoader = require("dataloader");
-const { resolvers } = require("./resolvers");
+const { relativeURL } = require("./resolvers");
+const R = require("ramda");
 
-const getTasksByGroupIds = async (ids, context) => {
-  try {
-    return ids.map(id => {
-      return resolvers.Query.getTasksByGroupId(
-        null,
-        { id: id.toString() },
-        context
-      );
-    });
-  } catch (err) {
-    throw err;
-  }
+const batchGetNestedFields = async (tasks, context) => {
+  return tasks.map(async task => {
+    const group = await context.loaders.group.load(task.groupId);
+    const bourreau = await context.loaders.bourreau.load(task.bourreauId);
+    const user = await context.loaders.user.load(task.userId);
+    return { ...task, group, bourreau, user };
+  });
+};
+
+const batchGetTasksByGroupIds = async (ids, context) => {
+  const data = await context.query(`${relativeURL}`);
+  return ids.map(async id => R.filter(R.propEq("groupId", +id), await data));
 };
 
 const loaders = context => ({
-  tasksByGroupIds: new DataLoader(ids => getTasksByGroupIds(ids, context))
+  tasksByGroupId: new DataLoader(groupIds =>
+    batchGetTasksByGroupIds(groupIds, context)
+  ),
+  nestedTask: new DataLoader(tasks => batchGetNestedFields(tasks, context))
 });
 
 module.exports = { loaders };

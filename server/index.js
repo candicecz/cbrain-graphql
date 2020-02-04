@@ -3,6 +3,7 @@ const session = require("express-session");
 const bodyParser = require("body-parser");
 const { ApolloServer } = require("apollo-server-express");
 const { schema, createLoaders } = require("./schema");
+const query = require("./query");
 
 require("dotenv").config();
 
@@ -35,7 +36,11 @@ const server = new ApolloServer({
       },
       user: { userId: req.session.userId }
     };
-    return { ...context, loaders: createLoaders(context) };
+
+    context.query = (...args) => query(context, ...args);
+    context.loaders = createLoaders(context);
+
+    return context;
   },
   schema
 });

@@ -2,8 +2,8 @@ const { gql } = require("apollo-server");
 
 const typeDefs = gql`
   extend type Query {
-    getGroupById(id: ID!): Group
-    getGroups(
+    group(id: ID!): Group
+    groups(
       cursor: Int
       limit: Int
       sortBy: GroupSort
@@ -14,14 +14,8 @@ const typeDefs = gql`
 
   extend type Mutation {
     createGroup(input: GroupInput): Group
-    deleteGroup(id: ID!): Response
-    deleteGroups(ids: [ID!]!): [Response!]!
     updateGroup(id: ID!, input: GroupInput): Response
-  }
-
-  type Heading {
-    header: String!
-    accessor: String!
+    deleteGroups(ids: [ID!]!): [Response!]!
   }
 
   input GroupInput {
@@ -39,15 +33,13 @@ const typeDefs = gql`
     siteId: ID
     creatorId: Int
     invisible: Boolean
-    files: Int
-    tasks: Int
-    users: Int
+    userfiles: [Userfile!]!
+    tasks: [Task!]!
+    users: [User!]!
   }
 
   type GroupFeed {
-    cursor: Int!
-    hasMore: Boolean!
-    groups: [Group]!
+    feed: [Group!]!
   }
 
   enum GroupSort {
@@ -58,7 +50,7 @@ const typeDefs = gql`
     siteId
     type
     invisible
-    files
+    userfiles
     users
     tasks
   }

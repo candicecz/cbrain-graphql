@@ -2,8 +2,8 @@ const { gql } = require("apollo-server");
 
 const typeDefs = gql`
   extend type Query {
-    getTagById(id: ID!): Tag
-    getTags(cursor: Int, limit: Int, sortBy: TagSort, orderBy: Order): TagFeed!
+    tag(id: ID!): Tag
+    tags(sortBy: TagSort, orderBy: Order): TagFeed!
   }
 
   extend type Mutation {
@@ -13,7 +13,6 @@ const typeDefs = gql`
   }
 
   input TagInput {
-    id: ID
     name: String!
     userId: ID
     groupId: ID
@@ -27,9 +26,7 @@ const typeDefs = gql`
   }
 
   type TagFeed {
-    cursor: Int!
-    hasMore: Boolean!
-    tags: [Tag]!
+    feed: [Tag]!
   }
 
   enum TagSort {

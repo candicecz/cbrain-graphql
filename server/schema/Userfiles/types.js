@@ -2,22 +2,16 @@ const { gql } = require("apollo-server");
 
 const typeDefs = gql`
   extend type Query {
-    userfilesTableHeaders: [Heading!]!
-    getUserfileById(id: ID!): Userfile
-    getUserfiles(
+    userfile(id: ID!): Userfile
+    userfiles(
+      groupId: ID
       cursor: Int
       limit: Int
       sortBy: UserfileSort
       orderBy: Order
     ): UserfileFeed!
-    getUserfileContent(id: ID!): String
-    getUserfilesByGroupId(
-      id: ID!
-      cursor: Int
-      limit: Int
-      sortBy: UserfileSort
-      orderBy: Order
-    ): UserfileFeed!
+    userfileContent(id: ID!): String
+    userfileTableHeaders: [Heading!]!
   }
 
   extend type Mutation {
@@ -47,9 +41,7 @@ const typeDefs = gql`
   }
 
   type UserfileFeed {
-    cursor: Int!
-    hasMore: Boolean!
-    userfiles: [Userfile]!
+    feed: [Userfile]!
   }
 
   enum ExtractMode {

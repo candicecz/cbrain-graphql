@@ -2,8 +2,8 @@ const { gql } = require("apollo-server");
 
 const typeDefs = gql`
   extend type Query {
-    getDataProviderById(id: ID!): DataProvider
-    getDataProviders(
+    dataProvider(id: ID!): DataProvider
+    dataProviders(
       cursor: Int
       limit: Int
       sortBy: DataProviderSort
@@ -44,9 +44,7 @@ const typeDefs = gql`
   }
 
   type DataProviderFeed {
-    cursor: Int!
-    hasMore: Boolean!
-    dataProviders: [DataProvider]!
+    feed: [DataProvider]!
   }
 
   type Alive {

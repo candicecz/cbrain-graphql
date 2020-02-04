@@ -1,52 +1,26 @@
-const {
-  paginateResults,
-  sortResults,
-  snakeKey,
-  camelKey
-} = require("../../utils");
+const { sort } = require("../../utils");
 
-const fetchCbrain = require("../../cbrain-api");
-
-const route = "data_providers";
+const relativeURL = "data_providers";
 
 const resolvers = {
   Query: {
-    getDataProviders: async (
-      _,
-      { cursor, limit, sortBy, orderBy },
-      context
-    ) => {
-      const results = await fetchCbrain(context, `${route}`)
-        .then(data => data.json())
-        .then(dataProviders =>
-          dataProviders.map(dataProvider => camelKey(dataProvider))
-        );
-      return paginateResults({
-        cursor,
-        limit,
-        results: sortResults({ sortBy, orderBy, results }),
-        route
-      });
+    dataProviders: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+      const data = await context.query(
+        `${relativeURL}?page=${cursor}&per_page=${limit}`
+      );
+      return { feed: sort({ data, sortBy, orderBy }) };
     },
-    getDataProviderById: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/`, { method: "GET" }, { id })
-        .then(data => data.json())
-        .then(dataProvider => {
-          return camelKey(dataProvider[0]);
-        });
+    dataProvider: async (_, { id }, context) => {
+      return await context.loaders.dataProvider.load(id);
     },
-    browseDataProvider: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/${id}/browse`)
-        .then(data => data.json())
-        .then(userfiles => userfiles.map(userfile => camelKey(userfile)));
+    browseDataProvider: async (_, { id }, context) => {
+      return await context.query(`${relativeURL}/${id}/browse`);
     },
-    isAliveDataProvider: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/${id}/is_alive`)
-        .then(data => data.json())
-        .then(({ is_alive }) => ({ isAlive: is_alive }));
+    isAliveDataProvider: async (_, { id }, context) => {
+      return await context.query(`${relativeURL}/${id}/is_alive`);
     }
   },
   Mutation: {}
 };
 
-module.exports = { resolvers };
+module.exports = { resolvers, relativeURL };

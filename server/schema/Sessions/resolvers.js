@@ -1,54 +1,37 @@
-const {
-  paginateResults,
-  sortResults,
-  snakeKey,
-  camelKey
-} = require("../../utils");
-const fetchCbrain = require("../../cbrain-api");
+const qs = require("qs");
+
+const relativeURL = "session";
 
 const resolvers = {
   Query: {
-    session: (_, __, context) => {
-      return fetchCbrain(context, "session")
-        .then(data => data.json())
-        .then(session => {
-          return {
-            userId: session.user_id
-          };
-        })
-        .catch(err => err);
+    session: async (_, __, context) => {
+      const { userId } = await context.query(relativeURL);
+      return { userId };
     }
   },
   Mutation: {
-    login: (_, { login, password }, context) => {
+    login: async (_, { login, password }, context) => {
       const { req } = context;
-      const query = {
+      const query_string = qs.stringify({
         login,
         password
-      };
-      return fetchCbrain(context, "session", { method: "POST" }, query)
-        .then(data => data.json())
-        .then(session => {
-          req.session.token = session.cbrain_api_token;
-          req.session.userId = session.user_id;
-          return {
-            userId: session.user_id
-          };
-        })
-        .catch(err => err);
+      });
+      const session = await context.query(`${relativeURL}?${query_string}`, {
+        method: "POST"
+      });
+      req.session.token = session.cbrainApiToken;
+      req.session.userId = session.userId;
+
+      return { userId: session.userId };
     },
-    logout: (_, __, context) => {
+    logout: async (_, __, context) => {
       const { res } = context;
 
-      return fetchCbrain(context, "session", { method: "DELETE" })
-        .then(session => {
-          res.clearCookie("sid", { path: "/" });
-          return {
-            status: session.status,
-            success: session.status === 200
-          };
-        })
-        .catch(err => err);
+      const session = await context.query(`${relativeURL}`, {
+        method: "DELETE"
+      });
+      res.clearCookie("sid", { path: "/" });
+      return session;
     }
   }
 };

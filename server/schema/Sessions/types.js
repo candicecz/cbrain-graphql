@@ -11,8 +11,6 @@ const typeDefs = gql`
 
   type Session {
     userId: ID
-    token: String
-    message: String
   }
 `;
 

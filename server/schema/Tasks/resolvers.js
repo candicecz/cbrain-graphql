@@ -1,29 +1,29 @@
-const { sortResults, snakeKey, camelKey } = require("../../utils");
-const fetchCbrain = require("../../cbrain-api");
-const changeCase = require("change-case");
-const R = require("ramda");
+const humps = require("humps");
+const qs = require("qs");
+const { sort } = require("../../utils");
 
-const route = "tasks";
-
-const transformTask = async (task, context) => {
-  if (context.loaders === undefined) {
-    return camelKey(task);
-  }
-  const { user_id, group_id, bourreau_id, ...rest } = await task;
-  const user = await context.loaders.user.load(user_id);
-  const group = await context.loaders.group.load(group_id);
-  const bourreau = await context.loaders.bourreau.load(bourreau_id);
-
-  return camelKey({
-    ...task,
-    user,
-    group,
-    bourreau
-  });
-};
+const relativeURL = "tasks";
 
 const resolvers = {
   Query: {
+    task: async (_, { id }, context) => {
+      const task = await context.query(`${relativeURL}/${id}`);
+      return await context.loaders.nestedTask.load(task);
+    },
+    tasks: async (_, { cursor, limit, sortBy, orderBy, groupId }, context) => {
+      let tasks;
+      if (groupId) {
+        tasks = await context.loaders.tasksByGroupId.load(+groupId);
+      } else {
+        tasks = await context.query(
+          `${relativeURL}?page=${cursor}&per_page=${limit}`
+        );
+      }
+
+      const data = await context.loaders.nestedTask.loadMany(tasks);
+
+      return { feed: sort({ data, sortBy, orderBy }) };
+    },
     taskTableHeaders: () => {
       return [
         { header: "type", accessor: "type" },
@@ -34,82 +34,28 @@ const resolvers = {
         { header: "created", accessor: "createdAt" },
         { header: "updated", accessor: "updatedAt" }
       ];
-    },
-    getTasks: async (
-      _,
-      { cursor = 1, limit = 100, sortBy, orderBy },
-      context
-    ) => {
-      const data = await fetchCbrain(
-        context,
-        `tasks?page=${cursor}&per_page=${limit}`
-      )
-        .then(data => data.json())
-        .then(tasks => tasks.map(async task => transformTask(task, context)));
-
-      const results = await Promise.all(data);
-
-      return {
-        hasMore: false,
-        cursor: cursor + 1,
-        [`${changeCase.camelCase(route)}`]:
-          sortResults({ sortBy, orderBy, results }) || []
-      };
-    },
-    getTaskById: (_, { id }, context) => {
-      return fetchCbrain(context, `${route}/${id}`)
-        .then(data => data.json())
-        .then(async task => transformTask(task, context));
-    },
-    getTasksByGroupId: async (
-      _,
-      { id, cursor = 1, limit = 100, sortBy, orderBy },
-      context
-    ) => {
-      const data = await fetchCbrain(
-        context,
-        `tasks?page=${cursor}&per_page=${limit}`
-      )
-        .then(data => data.json())
-        .then(tasks => tasks.map(async task => transformTask(task, context)));
-      const results = await Promise.all(data);
-
-      return {
-        hasMore: false,
-        cursor: cursor + 1,
-        [`${changeCase.camelCase(route)}`]:
-          sortResults({
-            sortBy,
-            orderBy,
-            results: R.filter(r => {
-              if (r.groupId || (r.group && r.group.id)) {
-                return (+r.groupId || r.group.id) === +id;
-              }
-            }, results)
-          }) || []
-      };
     }
   },
   Mutation: {
-    createTask: (_, { input }, context) => {
-      const { user } = context;
+    createTask: async (_, { input }, context) => {
       const { toolId, ...rest } = input;
-      return fetchCbrain(
-        context,
-        route,
-        { method: "POST" },
+      const query_string = qs.stringify(
         {
           tool_id: toolId,
-          cbrain_task: snakeKey({
+          cbrain_task: humps.decamelizeKeys({
             ...rest,
-            userId: user.userId
+            userId: context.user.userId
           })
-        }
-      )
-        .then(data => data.json())
-        .then(task => camelKey(task[0]));
+        },
+        { encode: false }
+      );
+
+      const tasks = await context.query(`${relativeURL}?${query_string}`, {
+        method: "POST"
+      });
+      return tasks[0];
     }
   }
 };
 
-module.exports = { resolvers };
+module.exports = { resolvers, relativeURL };

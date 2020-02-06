@@ -14,7 +14,7 @@ const resolvers = {
         `${relativeURL}?page=${cursor}&per_page=${limit}`
       );
       if (toolId) {
-        return R.filter(R.propEq("toolId", +toolId), await data);
+        data = R.filter(R.propEq("toolId", +toolId), await data);
       }
       return { feed: sort({ data, sortBy, orderBy }) };
     },

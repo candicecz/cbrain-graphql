@@ -14,7 +14,8 @@ const batchGetNestedFields = async (userfiles, context) => {
 };
 
 const batchGetUserfilesByGroupIds = async (ids, context) => {
-  const data = await context.query(`${relativeURL}`);
+  // [NOTE]: This is a patch awaiting an update to the api with the endpoint GET userfiles/:groupID
+  const data = await context.query(`${relativeURL}?page=${1}&per_page=${1000}`);
   return ids.map(async id => R.filter(R.propEq("groupId", +id), await data));
 };
 

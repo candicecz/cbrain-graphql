@@ -12,7 +12,8 @@ const batchGetNestedFields = async (tasks, context) => {
 };
 
 const batchGetTasksByGroupIds = async (ids, context) => {
-  const data = await context.query(`${relativeURL}`);
+  // [NOTE]: This is a patch awaiting an update to the api with the endpoint GET tasks/:groupID
+  const data = await context.query(`${relativeURL}?page=${1}&per_page=${1000}`);
   return ids.map(async id => R.filter(R.propEq("groupId", +id), await data));
 };
 

@@ -55,7 +55,7 @@ const resolvers = {
     },
     userfiles: async (
       _,
-      { cursor, limit, sortBy, orderBy, groupId },
+      { cursor = 1, limit = 1000, sortBy, orderBy, groupId },
       context
     ) => {
       let userfiles;
@@ -111,8 +111,9 @@ const resolvers = {
         method: "POST",
         body: formData
       });
+
       deleteTmpUpload(tmpPath);
-      return data;
+      return { status: data.notice && 201, success: data.notice && true };
     },
     updateUserfile: async (_, { id, input }, context) => {
       const query_string = qs.stringify(

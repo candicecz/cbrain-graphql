@@ -4,6 +4,7 @@ const typeDefs = gql`
   extend type Query {
     toolConfig(id: ID!): ToolConfig
     toolConfigs(
+      toolId: ID
       cursor: Int
       limit: Int
       sortBy: ToolConfigSort

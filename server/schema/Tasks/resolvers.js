@@ -6,11 +6,11 @@ const relativeURL = "tasks";
 
 const resolvers = {
   Query: {
-    task: async (_, { id }, context) => {
-      const task = await context.query(`${relativeURL}/${id}`);
-      return await context.loaders.nestedTask.load(task);
-    },
-    tasks: async (_, { cursor, limit, sortBy, orderBy, groupId }, context) => {
+    tasks: async (
+      _,
+      { cursor = 1, limit = 1000, sortBy, orderBy, groupId },
+      context
+    ) => {
       let tasks;
       if (groupId) {
         tasks = await context.loaders.tasksByGroupId.load(+groupId);
@@ -23,6 +23,10 @@ const resolvers = {
       const data = await context.loaders.nestedTask.loadMany(tasks);
 
       return { feed: sort({ data, sortBy, orderBy }) };
+    },
+    task: async (_, { id }, context) => {
+      const task = await context.query(`${relativeURL}/${id}`);
+      return await context.loaders.nestedTask.load(task);
     },
     taskTableHeaders: () => {
       return [

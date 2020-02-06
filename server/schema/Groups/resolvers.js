@@ -6,7 +6,11 @@ const relativeURL = "groups";
 
 const resolvers = {
   Query: {
-    groups: async (_, { cursor, limit, sortBy, orderBy }, context) => {
+    groups: async (
+      _,
+      { cursor = 1, limit = 1000, sortBy, orderBy },
+      context
+    ) => {
       const groups = await context.query(
         `${relativeURL}?page=${cursor}&per_page=${limit}`
       );
@@ -27,7 +31,7 @@ const resolvers = {
         { header: "site", accessor: "siteId" },
         { header: "creator", accessor: "creatorId" },
         { header: "users", accessor: "users" },
-        { header: "files", accessor: "files" },
+        { header: "files", accessor: "userfiles" },
         { header: "tasks", accessor: "tasks" }
       ];
     }

@@ -3,6 +3,9 @@ const fs = require("fs");
 const mkdirp = require("mkdirp");
 const shortid = require("shortid");
 const { sort } = require("../../utils");
+const humps = require("humps");
+const qs = require("qs");
+const R = require("ramda");
 
 const relativeURL = "userfiles";
 
@@ -129,10 +132,29 @@ const resolvers = {
         { file_ids: ids },
         { encode: false, indices: false, arrayFormat: "brackets" }
       );
-      return await context.query(
+      const res = await context.query(
         `${relativeURL}/delete_files?${query_string}`,
         { method: "DELETE" }
       );
+      const successful_deletions =
+        res.deletedList &&
+        res.deletedList.map(id => {
+          return {
+            id,
+            status: 200,
+            success: true
+          };
+        });
+
+      const failed_deletions = ids.reduce((r, id, i) => {
+        if (!R.contains(+id, res.deletedList)) {
+          r.push({ id, status: 400, success: false, message: res.error });
+        }
+        return r;
+      }, []);
+
+      const results = [...successful_deletions, ...failed_deletions];
+      return results;
     }
   }
 };

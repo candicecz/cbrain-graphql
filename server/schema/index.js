@@ -26,6 +26,8 @@ const typeDefs = gql`
   type Response {
     success: Boolean!
     status: Int
+    id: ID
+    message: String
   }
 
   type Heading {

@@ -16,7 +16,7 @@ const typeDefs = gql`
 
   extend type Mutation {
     singleUpload(input: UserfileInput): Response
-    deleteUserfiles(ids: [ID!]!): Response
+    deleteUserfiles(ids: [ID!]!): [Response!]
     updateUserfile(id: ID!, input: UpdateUserfileInput): Response
   }
 

@@ -14,7 +14,7 @@ const typeDefs = gql`
 
   type ToolConfig {
     id: ID
-    version: String
+    versionName: String
     description: String
     toolId: ID
     bourreauId: ID
@@ -28,7 +28,7 @@ const typeDefs = gql`
 
   enum ToolConfigSort {
     id
-    version
+    versionName
     description
     toolId
     bourreauId

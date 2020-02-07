@@ -1,7 +1,8 @@
 const fetch = require("node-fetch");
 const humps = require("humps");
+const R = require("ramda");
 
-const { AuthenticationError } = require("apollo-server-express");
+const { AuthenticationError, ApolloError } = require("apollo-server-express");
 
 const query = async (context, relativeURL, req) => {
   try {
@@ -15,7 +16,6 @@ const query = async (context, relativeURL, req) => {
     if (response.status !== 200 && response.status !== 201) {
       throw response;
     }
-
     try {
       // Parses the response body as json
       const data = await response.json();
@@ -31,7 +31,7 @@ const query = async (context, relativeURL, req) => {
     if (err.status === 401) {
       throw new AuthenticationError(`${err.statusText}`);
     }
-    throw new Error(`${err.status} - ${err.statusText}`);
+    throw new ApolloError(err.statusText, err.status, { url: err.url });
   }
 };
 

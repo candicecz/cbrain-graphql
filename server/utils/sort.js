@@ -10,6 +10,4 @@ const sort = ({ data, sortBy, orderBy = "ASC" }) => {
   return R.sort(order(R.compose(toLower, R.prop(`${sortBy}`))), data);
 };
 
-module.exports = {
-  sort
-};
+module.exports = sort;

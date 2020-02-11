@@ -3,9 +3,10 @@ const session = require("express-session");
 const bodyParser = require("body-parser");
 const { ApolloServer } = require("apollo-server-express");
 const { schema, createLoaders } = require("./schema");
-const query = require("./query");
+const { query } = require("./utils/");
 
 require("dotenv").config();
+console.log(query);
 
 const cors = {
   origin:

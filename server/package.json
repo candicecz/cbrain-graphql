@@ -16,7 +16,7 @@
     "graphql-type-json": "^0.2.4",
     "graphql-upload": "^8.0.4",
     "humps": "^2.0.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "mkdirp": "^0.5.1",
     "node-fetch": "^2.3.0",
     "nodemon": "^1.18.10",

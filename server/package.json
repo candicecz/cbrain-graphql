@@ -18,7 +18,7 @@
     "humps": "^2.0.1",
     "lodash": "^4.17.15",
     "mkdirp": "^0.5.1",
-    "node-fetch": "^2.3.0",
+    "node-fetch": "^2.6.1",
     "nodemon": "^1.18.10",
     "npm": "^6.13.7",
     "package.json": "^2.0.1",
